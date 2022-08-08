@@ -171,7 +171,7 @@ moshi = "1.13.0"
 moshix = "0.18.3"
 retrofit = "2.9.0"
 modernstorage = "1.0.0-alpha06"
-engineIo = "1.0.1"
+engineIo = "1.0.2"
 soketIo = "1.0.1"
 store = "4.0.5"
 #

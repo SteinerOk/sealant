@@ -172,7 +172,7 @@ moshix = "0.18.3"
 retrofit = "2.9.0"
 modernstorage = "1.0.0-alpha06"
 engineIo = "1.0.1"
-soketIo = "1.0.1"
+soketIo = "1.0.2"
 store = "4.0.5"
 #
 desugarJdkLibs = "1.2.0"

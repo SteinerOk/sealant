@@ -34,7 +34,7 @@ auto-service = "1.0.1"
 auto-service-ksp = "1.0.0"
 #
 instruments-junit = "4.13.2"
-instruments-testMain = "1.4.1-alpha07"
+instruments-testMain = "1.5.0"
 instruments-testExt = "1.1.4-alpha07"
 instruments-espresso = "3.5.0-alpha07"
 

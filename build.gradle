@@ -1,0 +1,32 @@
+buildscript {
+    apply from: "gradle/configurations.gradle"
+}
+
+plugins {
+    alias(libs.plugins.versions)
+    alias(libs.plugins.spotless)
+    id "dev.steinerok.sealant.publish-root"
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.anvil) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.mavenPublish) apply false
+    alias(libs.plugins.kotlin.kapt) apply false
+}
+
+if (rootProject.file('local.properties').exists()) {
+    Properties localProperties = new Properties()
+    localProperties.load(rootProject.file('local.properties').newDataInputStream())
+    localProperties.each { key, value -> rootProject.ext.set(key, value) }
+}
+
+clean {
+    delete rootProject.buildDir
+}
+
+wrapper {
+    gradleVersion = "${libs.versions.gradle.get()}"
+    distributionType = Wrapper.DistributionType.BIN
+}

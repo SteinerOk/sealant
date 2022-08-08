@@ -1,0 +1,8 @@
+allprojects {
+    group = GROUP
+    version = VERSION_NAME
+}
+
+ext {
+    isSnapshot = version.endsWith("-SNAPSHOT")
+}

@@ -1,0 +1,36 @@
+pluginManagement {
+    includeBuild("build-logic-settings")
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+    plugins {}
+    resolutionStrategy {}
+}
+
+plugins {
+    id "convention-scan"
+}
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+    versionCatalogs {
+        libs {
+            from(files("./gradle/dependencies-latest.toml"))
+        }
+        stableLibs {
+            from(files("./gradle/dependencies-stable.toml"))
+        }
+    }
+}
+
+rootProject.name = "sealant"
+
+includeBuild("build-logic")

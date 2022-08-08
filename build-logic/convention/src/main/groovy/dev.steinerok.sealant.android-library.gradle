@@ -1,0 +1,49 @@
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android"
+}
+
+android {
+    buildToolsVersion = versions.buildConfig.buildTools
+    compileSdk versions.buildConfig.compileSdk
+
+    defaultConfig {
+        minSdk versions.buildConfig.minSdk
+        targetSdk versions.buildConfig.targetSdk
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        buildConfig false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+        freeCompilerArgs += [
+                "-Xexplicit-api=strict",
+                "-Xjvm-default=all",
+                "-opt-in=kotlin.RequiresOptIn",
+                "-opt-in=kotlin.Experimental",
+                "-opt-in=kotlin.ExperimentalStdlibApi",
+                "-opt-in=kotlin.time.ExperimentalTime",
+                "-opt-in=kotlin.contracts.ExperimentalContracts",
+        ]
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}

@@ -1,0 +1,26 @@
+plugins {
+    id "com.vanniktech.maven.publish"
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "CustomLocal"
+            def releasesRepoUrl = "${project.rootDir}/repos/releases"
+            def snapshotsRepoUrl = "${project.rootDir}/repos/snapshots"
+            url = rootProject.isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+        }
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/SteinerOk/sealant"
+            credentials {
+                username = project.findProperty("GitHub.username") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("GitHub.token") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+mavenPublishing {
+    signAllPublications()
+}

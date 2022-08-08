@@ -1,0 +1,21 @@
+plugins {
+    id "com.diffplug.spotless"
+}
+
+spotless {
+    kotlin {
+        target "**/*.kt"
+        targetExclude("$buildDir/**/*.kt")
+        ktlint(libs.versions.ktlintTool.get())
+        trimTrailingWhitespace()
+        endWithNewline()
+        // licenseHeaderFile rootProject.file('gradle/spotless/copyright.kt')
+    }
+    java {
+        target "**/*.java"
+        trimTrailingWhitespace()
+        removeUnusedImports()
+        endWithNewline()
+        importOrder()
+    }
+}

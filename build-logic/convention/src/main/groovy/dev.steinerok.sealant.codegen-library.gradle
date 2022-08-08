@@ -1,0 +1,11 @@
+plugins {
+    id "dev.steinerok.sealant.kotlin-library"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        freeCompilerArgs += [
+                "-opt-in=com.squareup.anvil.annotations.ExperimentalAnvilApi",
+        ]
+    }
+}

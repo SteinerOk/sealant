@@ -5,17 +5,28 @@ plugins {
 spotless {
     kotlin {
         target "**/*.kt"
-        targetExclude("$buildDir/**/*.kt")
+        targetExclude "**/build/**"
         ktlint(libs.versions.ktlintTool.get())
         trimTrailingWhitespace()
         endWithNewline()
-        // licenseHeaderFile rootProject.file('gradle/spotless/copyright.kt')
+        licenseHeaderFile rootProject.file('gradle/spotless/copyright.kt')
     }
-    java {
-        target "**/*.java"
+    format "xml", {
+        target "**/*.xml"
+        targetExclude "**/build/**"
+        licenseHeaderFile(rootProject.file("gradle/spotless/copyright.xml"), "(<[^!?])")
+    }
+    kotlinGradle {
+        target "**/*.gradle.kts"
+        targetExclude "**/build/**"
+        ktlint(libs.versions.ktlintTool.get())
         trimTrailingWhitespace()
-        removeUnusedImports()
         endWithNewline()
-        importOrder()
+    }
+    groovyGradle {
+        target '**/*.gradle'
+        targetExclude "**/build/**"
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }

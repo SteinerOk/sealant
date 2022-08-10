@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Ihor Kushnirenko
+ * Copyright $YEAR Ihor Kushnirenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.steinerok.sealant.core.generator
-
-import com.squareup.anvil.compiler.api.AnvilContext
-import com.squareup.anvil.compiler.api.CodeGenerator
-
-/**
- *
- */
-public interface AlwaysApplicableCodeGenerator : CodeGenerator {
-
-    // Behavior is not dependent on factory generation
-    override fun isApplicable(context: AnvilContext): Boolean = true
-}

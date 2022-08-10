@@ -15,7 +15,7 @@ mavenPublishPlugin = "0.21.0"
 kotlinx-coroutines = "1.6.4"
 # AndroidX libraries
 androidx-activity = "1.6.0-beta01"
-androidx-annotation-main = "1.5.0-alpha01"
+androidx-annotation-main = "1.5.0-alpha02"
 androidx-appcompat = "1.6.0-beta01"
 androidx-constraintlayout-main = "2.2.0-alpha03"
 androidx-core-runtime = "1.9.0-beta01"

@@ -36,3 +36,4 @@ rootProject.name = "sealant"
 includeBuild("build-logic")
 
 include ':di-common'
+include ':core-api'

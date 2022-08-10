@@ -34,3 +34,5 @@ dependencyResolutionManagement {
 rootProject.name = "sealant"
 
 includeBuild("build-logic")
+
+include ':di-common'

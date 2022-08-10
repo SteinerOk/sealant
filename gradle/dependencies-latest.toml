@@ -22,7 +22,7 @@ androidx-core-runtime = "1.9.0-beta01"
 androidx-fragment = "1.6.0-alpha01"
 androidx-lifecycle = "2.6.0-alpha01"
 androidx-savedstate = "1.2.0"
-androidx-work = "2.8.0-alpha02"
+androidx-work = "2.8.0-alpha03"
 # Material Design Components and UI
 material-native = "1.7.0-alpha03"
 #

@@ -37,3 +37,4 @@ includeBuild("build-logic")
 
 include ':di-common'
 include ':core-api'
+include ':core-codegen'

@@ -38,3 +38,5 @@ includeBuild("build-logic")
 include ':di-common'
 include ':core-api'
 include ':core-codegen'
+include ':appcomponent-api'
+include ':appcomponent-codegen'

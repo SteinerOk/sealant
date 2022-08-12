@@ -55,7 +55,12 @@ public class ChildScopesGenerator : AlwaysApplicableCodeGenerator {
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.sealantConfiguration)
         }
-        .mapNotNull { generateScopes(codeGenDir, it) }
+        .onEach {
+            // TODO: Verification if need
+        }
+        .flatMap { clazz ->
+            listOfNotNull(generateScopes(codeGenDir, clazz))
+        }
         .toList()
 
     private fun generateScopes(codeGenDir: File, clazz: ClassReference): GeneratedFile? {

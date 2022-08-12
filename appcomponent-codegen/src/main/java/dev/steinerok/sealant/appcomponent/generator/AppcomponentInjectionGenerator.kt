@@ -79,10 +79,15 @@ public class AppcomponentInjectionGenerator : AlwaysApplicableCodeGenerator {
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.injectWith) &&
-                clazz.getScopeFrom(FqNames.injectWith)
-                    .hasSealantFeatureForScope(SealantFeature.Appcomponent)
+                    clazz.getScopeFrom(FqNames.injectWith)
+                        .hasSealantFeatureForScope(SealantFeature.Appcomponent)
         }
-        .map { generateComponent(codeGenDir, it) }
+        .onEach {
+            // TODO: Verification if need
+        }
+        .flatMap { clazz ->
+            listOfNotNull(generateComponent(codeGenDir, clazz))
+        }
         .toList()
 
     private fun generateComponent(codeGenDir: File, clazz: ClassReference): GeneratedFile {

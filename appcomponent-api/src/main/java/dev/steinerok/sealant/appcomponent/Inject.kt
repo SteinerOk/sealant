@@ -29,8 +29,9 @@ public fun injectViaSealant(
     injectable: SealantInjectable<*>,
     injectorsResolver: InjectorsResolver
 ) {
-    val injectWith = injectable::class.java.getAnnotation(InjectWith::class.java)
-    requireNotNull(injectWith) { "Injectable class is not annotated @InjectWith" }
+    val injectWith = requireNotNull(injectable::class.java.getAnnotation(InjectWith::class.java)) {
+        "Injectable class is not annotated @InjectWith, but must"
+    }
 
     val injectScope = injectWith.scope
     val injectorsOwner = injectorsResolver(injectScope, injectable)

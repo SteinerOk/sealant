@@ -10,7 +10,7 @@ spotlessPlugin = "6.10.0"
 ktlintTool = "0.46.1"
 anvilPlugin = "2.4.2"
 grgitPlugin = "5.0.0"
-mavenPublishPlugin = "0.21.0"
+mavenPublishPlugin = "0.22.0"
 # KotlinX libraries
 kotlinx-coroutines = "1.6.4"
 # AndroidX libraries

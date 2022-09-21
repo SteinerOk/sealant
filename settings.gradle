@@ -43,3 +43,8 @@ include ':viewmodel-api'
 include ':viewmodel-codegen'
 include ':work-api'
 include ':work-codegen'
+
+include ':sample:core-di'
+include ':sample:feature-entrance'
+include ':sample:feature-home'
+include ':sample:app'

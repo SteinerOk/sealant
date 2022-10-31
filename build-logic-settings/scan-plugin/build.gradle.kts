@@ -17,5 +17,5 @@ kotlinDslPluginOptions {
 }
 
 dependencies {
-    implementation("com.gradle.enterprise:com.gradle.enterprise.gradle.plugin:3.11.2")
+    implementation("com.gradle.enterprise:com.gradle.enterprise.gradle.plugin:3.11.3")
 }

@@ -27,7 +27,7 @@ androidx-work = "2.7.1"
 material-native = "1.7.0"
 #
 timber = "5.0.1"
-dagger = "2.44"
+dagger = "2.44.2"
 #
 kotlinpoet = "1.12.0"
 auto-service = "1.0.1"

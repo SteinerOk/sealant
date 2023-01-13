@@ -109,7 +109,7 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
 
 ## License
 
-    Copyright (c) 2022 Ihor Kushnirenko
+    Copyright (c) 2022-2023 Ihor Kushnirenko
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

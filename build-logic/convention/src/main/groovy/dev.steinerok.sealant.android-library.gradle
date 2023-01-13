@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    buildToolsVersion = versions.buildConfig.buildTools
+    buildToolsVersion versions.buildConfig.buildTools
     compileSdk versions.buildConfig.compileSdk
 
     defaultConfig {
@@ -31,13 +31,15 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
+        // Set JVM target to 11
         jvmTarget = JavaVersion.VERSION_11.toString()
+        // Enable experimental APIs
         freeCompilerArgs += [
                 "-Xexplicit-api=strict",
                 "-Xjvm-default=all",
                 "-opt-in=kotlin.RequiresOptIn",
-                "-opt-in=kotlin.Experimental",
                 "-opt-in=kotlin.ExperimentalStdlibApi",
+                "-opt-in=kotlin.ExperimentalMultiplatform",
                 "-opt-in=kotlin.time.ExperimentalTime",
                 "-opt-in=kotlin.contracts.ExperimentalContracts",
         ]

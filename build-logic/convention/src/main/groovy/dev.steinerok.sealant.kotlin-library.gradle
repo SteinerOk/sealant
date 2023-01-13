@@ -8,17 +8,19 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs += [
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask).all {
+    compilerOptions {
+        // Enable experimental APIs
+        freeCompilerArgs.addAll(
                 "-Xjvm-default=all",
                 "-opt-in=kotlin.RequiresOptIn",
-                "-opt-in=kotlin.Experimental",
                 "-opt-in=kotlin.ExperimentalStdlibApi",
+                "-opt-in=kotlin.ExperimentalMultiplatform",
                 "-opt-in=kotlin.time.ExperimentalTime",
                 "-opt-in=kotlin.contracts.ExperimentalContracts",
-        ]
+        )
+        // Set JVM target to 11
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 

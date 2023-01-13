@@ -2,14 +2,15 @@ plugins {
     id "com.squareup.anvil"
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        freeCompilerArgs += [
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask).all {
+    compilerOptions {
+        // Enable experimental APIs
+        freeCompilerArgs.addAll(
                 "-opt-in=com.squareup.anvil.annotations.ExperimentalAnvilApi",
-        ]
+        )
     }
 }
 
 anvil {
-    syncGeneratedSources = false
+    syncGeneratedSources = true
 }

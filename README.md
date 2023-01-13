@@ -16,7 +16,7 @@ Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers article [
 Add dependencies:
 ```gradle
 dependencies {
-    def sealant_version = "0.1.0"
+    def sealant_version = "0.2.0"
 
     // Common
     implementation "io.github.steinerok.sealant:di-common:${sealant_version}"

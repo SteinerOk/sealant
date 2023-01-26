@@ -24,7 +24,7 @@ androidx-lifecycle = "2.5.1"
 androidx-savedstate = "1.2.0"
 androidx-work = "2.7.1"
 # Material Design Components and UI
-material-native = "1.7.0"
+material-native = "1.8.0"
 #
 timber = "5.0.1"
 dagger = "2.44.2"

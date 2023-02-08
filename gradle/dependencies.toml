@@ -4,7 +4,7 @@ kotlin = "1.8.10"
 gradle = "7.6"
 # Plugins and tools, mobile-services independent
 kspPlugin = "1.8.10-1.0.9"
-androidPlugin = "7.4.0"
+androidPlugin = "7.4.1"
 versionsPlugin = "0.45.0"
 spotlessPlugin = "6.14.1"
 ktlintTool = "0.46.1"

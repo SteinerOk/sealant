@@ -8,12 +8,9 @@ plugins {
 group = "dev.steinerok.buildlogicsettings"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-kotlinDslPluginOptions {
-    jvmTarget.set(JavaVersion.VERSION_11.toString())
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
 }
 
 dependencies {

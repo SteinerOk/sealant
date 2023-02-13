@@ -1,9 +1,9 @@
 ext.versions = [
         'buildConfig': [
-                buildTools: "33.0.0",
+                buildTools: "33.0.2",
                 minSdk    : 21,
-                targetSdk : 32,
+                targetSdk : 33,
                 compileSdk: 33,
-                ndk       : "25.1.8937393",
+                ndk       : "25.2.9519653",
         ],
 ]

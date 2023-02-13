@@ -1,14 +1,25 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
+    //noinspection JavaPluginLanguageLevel
     id "java-library"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+kotlin {
+    explicitApi()
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask).all {
+// Configure Java to use our chosen language level. Kotlin will automatically pick this up
+tasks.withType(JavaBasePlugin).all {
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(11))
+        }
+    }
+}
+
+tasks.withType(KotlinCompilationTask).all {
     compilerOptions {
         // Enable experimental APIs
         freeCompilerArgs.addAll(
@@ -19,13 +30,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask).all {
                 "-opt-in=kotlin.time.ExperimentalTime",
                 "-opt-in=kotlin.contracts.ExperimentalContracts",
         )
-        // Set JVM target to 11
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
-}
-
-kotlin {
-    explicitApi()
 }
 
 dependencies {

@@ -1,19 +1,14 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
     id "dev.steinerok.sealant.kotlin-library"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask).all {
+tasks.withType(KotlinCompilationTask).all {
     compilerOptions {
         // Enable experimental APIs
         freeCompilerArgs.addAll(
                 "-opt-in=com.squareup.anvil.annotations.ExperimentalAnvilApi",
         )
-        // Set JVM target to 11
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }

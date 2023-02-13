@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## Version 0.2.1
+
+_2023-02-13_
+
+* Upgrade Kotlin to `1.8.10`.
+
 ## Version 0.2.0
 
 _2023-01-13_

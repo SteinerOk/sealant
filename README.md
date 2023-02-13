@@ -16,7 +16,7 @@ Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers article [
 Add dependencies:
 ```gradle
 dependencies {
-    def sealant_version = "0.2.0"
+    def sealant_version = "0.2.1"
 
     // Common
     implementation "io.github.steinerok.sealant:di-common:${sealant_version}"
@@ -125,7 +125,7 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
 
 [Anvil]: https://github.com/square/anvil
 [Dagger]: https://dagger.dev
-[Hilt]: https://dagger.dev/hilt/view-model.html
+[Hilt]: https://dagger.dev/hilt/
 [N26 Path to Anvil]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
 [Extending Anvil for Fun and Profit]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
 [Tangle]: https://rbusarow.github.io/Tangle/

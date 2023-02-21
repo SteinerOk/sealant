@@ -5,7 +5,7 @@ gradle = "8.0"
 # Plugins and tools, mobile-services independent
 kspPlugin = "1.8.10-1.0.9"
 androidPlugin = "7.4.1"
-versionsPlugin = "0.45.0"
+versionsPlugin = "0.46.0"
 spotlessPlugin = "6.15.0"
 ktlintTool = "0.46.1"
 anvilPlugin = "2.4.4"

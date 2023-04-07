@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## Version 0.2.2
+
+_2023-04-07_
+
+* Upgrade Kotlin to `1.8.20` and Anvil to `2.4.5`. This release is not compatible with lower versions of Kotlin and Anvil.
+
 ## Version 0.2.1
 
 _2023-02-13_

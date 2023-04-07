@@ -106,7 +106,7 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
             val paramsParam = constructor.parameters.firstOrNull { param ->
                 param.isAnnotatedWith(FqNames.assisted) &&
                     param.type().asClassReference().fqName == FqNames.workerParameters &&
-                    param.name == "params"
+                    param.name == "workerParams"
             }
             val assistedParamsCount = constructor.parameters.filter { param ->
                 param.isAnnotatedWith(FqNames.assisted)
@@ -116,7 +116,7 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
                     message = "Your constructor witch annotated `@AssistedInject` must have" +
                         "only 2 parameters annotated `@Assisted`: " +
                         "`appContext` with type ${FqNames.context} and " +
-                        "`params` with type ${FqNames.workerParameters}",
+                        "`workerParams` with type ${FqNames.workerParameters}",
                     classReference = clazz
                 )
             }

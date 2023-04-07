@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.2.3
+
+_2023-04-07_
+
+* Revert KotlinPoet to `1.12.0` due to generation errors in WorkerAssistedFactory.
+* Fix WorkerParameters variable name in Workers.
+
 ## Version 0.2.2
 
 _2023-04-07_

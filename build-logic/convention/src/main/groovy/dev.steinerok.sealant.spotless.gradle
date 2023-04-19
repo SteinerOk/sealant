@@ -9,7 +9,7 @@ spotless {
         ktlint(libs.versions.ktlintTool.get())
         trimTrailingWhitespace()
         endWithNewline()
-        licenseHeaderFile rootProject.file('gradle/spotless/copyright.kt')
+        licenseHeaderFile rootProject.file("gradle/spotless/copyright.kt")
     }
     format "xml", {
         target "**/*.xml"
@@ -24,7 +24,7 @@ spotless {
         endWithNewline()
     }
     groovyGradle {
-        target '**/*.gradle'
+        target "**/*.gradle"
         targetExclude "**/build/**"
         trimTrailingWhitespace()
         endWithNewline()

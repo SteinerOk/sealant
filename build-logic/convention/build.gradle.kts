@@ -18,5 +18,5 @@ dependencies {
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.anvil.gradlePlugin)
     implementation(libs.spotless.gradlePlugin)
-    implementation(libs.mavenPublish.gradlePlugin)
+    implementation(libs.mavenPublish.default.gradlePlugin)
 }

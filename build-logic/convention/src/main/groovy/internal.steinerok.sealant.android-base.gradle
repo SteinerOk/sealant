@@ -44,5 +44,5 @@ tasks.withType(JavaBasePlugin).all {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: "libs", include: ["*.jar"])
 }

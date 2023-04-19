@@ -10,11 +10,10 @@ pluginManagement {
 }
 
 plugins {
-    id "convention-scan"
+    id("convention-scan")
 }
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
+@Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -22,29 +21,23 @@ dependencyResolutionManagement {
         mavenCentral()
     }
     versionCatalogs {
-        libs {
+        create("libs") {
             from(files("./gradle/dependencies.toml"))
         }
     }
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = "sealant"
 
 includeBuild("build-logic")
 
-include ':di-common'
-include ':core-api'
-include ':core-codegen'
-include ':appcomponent-api'
-include ':appcomponent-codegen'
-include ':fragment-api'
-include ':fragment-codegen'
-include ':viewmodel-api'
-include ':viewmodel-codegen'
-include ':work-api'
-include ':work-codegen'
+include(":di-common")
+include(":core-api", ":core-codegen")
+include(":appcomponent-api", ":appcomponent-codegen")
+include(":fragment-api", ":fragment-codegen")
+include(":viewmodel-api", ":viewmodel-codegen")
+include(":work-api", ":work-codegen")
 
-include ':sample:core-di'
-include ':sample:feature-entrance'
-include ':sample:feature-home'
-include ':sample:app'
+// include(":sample:core-di", ":sample:feature-entrance", ":sample:feature-home", ":sample:app")

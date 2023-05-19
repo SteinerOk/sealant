@@ -1,7 +1,7 @@
 [versions]
 # General components
 kotlin = "1.8.21"
-gradle = "8.1"
+gradle = "8.1.1"
 # Plugins and tools, mobile-services independent
 kspPlugin = "1.8.21-1.0.11"
 androidPlugin = "8.0.1"

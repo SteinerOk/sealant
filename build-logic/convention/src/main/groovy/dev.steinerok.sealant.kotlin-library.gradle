@@ -11,11 +11,9 @@ kotlin {
 }
 
 // Configure Java to use our chosen language level. Kotlin will automatically pick this up
-tasks.withType(JavaBasePlugin).all {
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(11))
-        }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
     }
 }
 

@@ -10,11 +10,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
-    versionCatalogs {
-        create("libs") {
-            from(files("../gradle/dependencies.toml"))
-        }
-    }
+    versionCatalogs {}
 }
 
 include(":scan-plugin")

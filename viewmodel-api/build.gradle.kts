@@ -14,8 +14,4 @@ dependencies {
 
     api(libs.androidx.activity.mainKtx)
     api(libs.androidx.fragment.mainKtx)
-
-    testImplementation(libs.junit4)
-    androidTestImplementation(libs.androidx.test.ext.junitKtx)
-    androidTestImplementation(libs.androidx.test.espresso.core)
 }

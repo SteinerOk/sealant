@@ -19,7 +19,7 @@ plugins {
 }
 
 tasks.wrapper {
-    gradleVersion = libs.versions.gradle.get()
+    gradleVersion = configuration.versions.gradle.get()
     distributionType = Wrapper.DistributionType.BIN
 }
 

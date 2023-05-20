@@ -1,13 +1,11 @@
 [versions]
-# General components
+# Language, plugins and tools, mobile-services independent
 kotlin = "1.8.21"
-gradle = "8.1.1"
-# Plugins and tools, mobile-services independent
 kspPlugin = "1.8.21-1.0.11"
 androidPlugin = "8.0.1"
 versionsPlugin = "0.46.0"
 spotlessPlugin = "6.18.0"
-ktlintTool = "0.46.1"
+ktlintTool = "0.49.1"
 anvilPlugin = "2.4.5"
 grgitPlugin = "5.2.0"
 mavenPublishPlugin = "0.25.2"

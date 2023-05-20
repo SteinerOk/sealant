@@ -1,7 +1,0 @@
-plugins {
-    id "dev.steinerok.sealant.anvil"
-}
-
-anvil {
-    generateDaggerFactories = true
-}

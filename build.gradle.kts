@@ -1,9 +1,5 @@
 import java.util.Properties
 
-buildscript {
-    apply(from = "gradle/configurations.gradle")
-}
-
 plugins {
     id("dev.steinerok.sealant.publish-root")
     alias(libs.plugins.versions)

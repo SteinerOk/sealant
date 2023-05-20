@@ -43,4 +43,4 @@ include(":fragment-api", ":fragment-codegen")
 include(":viewmodel-api", ":viewmodel-codegen")
 include(":work-api", ":work-codegen")
 
-// include(":sample:core-di", ":sample:feature-entrance", ":sample:feature-home", ":sample:app")
+include(":sample:core-di", ":sample:feature-entrance", ":sample:feature-home", ":sample:app")

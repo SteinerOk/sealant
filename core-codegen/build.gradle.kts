@@ -16,6 +16,4 @@ dependencies {
     implementation(libs.dagger.runtime)
     implementation(libs.anvil.annotations)
     implementation(libs.anvil.compiler.utils)
-
-    testImplementation(libs.junit4)
 }

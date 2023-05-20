@@ -6,6 +6,4 @@ plugins {
 
 dependencies {
     api(libs.dagger.runtime)
-
-    testImplementation(libs.junit4)
 }

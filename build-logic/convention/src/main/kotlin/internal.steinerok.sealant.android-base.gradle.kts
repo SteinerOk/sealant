@@ -2,6 +2,8 @@ import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.accessors.dm.LibrariesForConfiguration
+import org.gradle.accessors.dm.LibrariesForConfiguration.VersionAccessors
+import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
     id("org.jetbrains.kotlin.android")
@@ -9,8 +11,10 @@ plugins {
 }
 
 // https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
-val Project.versions: LibrariesForConfiguration.VersionAccessors
+val Project.versions: VersionAccessors
     get() = the<LibrariesForConfiguration>().versions
+val Project.libs: LibrariesForLibs
+    get() = the()
 
 @Suppress("UnstableApiUsage")
 val commonAndroidConfiguration: CommonExtension<*, *, *, *>.() -> Unit = {
@@ -23,24 +27,21 @@ val commonAndroidConfiguration: CommonExtension<*, *, *, *>.() -> Unit = {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    dependencies {
+        testImplementation(libs.junit4)
+        androidTestImplementation(libs.junit4)
+        androidTestImplementation(libs.androidx.test.core)
+        androidTestImplementation(libs.androidx.test.coreKtx)
+        androidTestImplementation(libs.androidx.test.ext.junit)
+        androidTestImplementation(libs.androidx.test.ext.junitKtx)
+    }
+
     // Can remove this once https://issuetracker.google.com/issues/260059413 is fixed.
     // See https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-}
-
-inline fun <reified T : CommonExtension<*, *, *, *>> Project.applyBaseAndroidConfiguration() {
-    extensions.configure<T> { commonAndroidConfiguration() }
-}
-
-pluginManager.withPlugin("com.android.application") {
-    applyBaseAndroidConfiguration<ApplicationExtension>()
-}
-
-pluginManager.withPlugin("com.android.library") {
-    applyBaseAndroidConfiguration<LibraryExtension>()
 }
 
 plugins.withType<JavaBasePlugin>().configureEach {
@@ -50,3 +51,17 @@ plugins.withType<JavaBasePlugin>().configureEach {
         }
     }
 }
+
+pluginManager.withPlugin("com.android.application") {
+    the<ApplicationExtension>().commonAndroidConfiguration()
+}
+
+pluginManager.withPlugin("com.android.library") {
+    the<LibraryExtension>().commonAndroidConfiguration()
+}
+
+fun DependencyHandler.testImplementation(dependencyNotation: Any) =
+    add("testImplementation", dependencyNotation)
+
+fun DependencyHandler.androidTestImplementation(dependencyNotation: Any) =
+    add("androidTestImplementation", dependencyNotation)

@@ -18,6 +18,4 @@ dependencies {
     implementation(libs.anvil.compiler.utils)
 
     api(projects.sealant.coreCodegen)
-
-    testImplementation(libs.junit4)
 }

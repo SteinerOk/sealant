@@ -11,5 +11,5 @@ java {
 }
 
 dependencies {
-    implementation("com.gradle.enterprise:com.gradle.enterprise.gradle.plugin:3.13.2")
+    implementation("com.gradle.enterprise:com.gradle.enterprise.gradle.plugin:3.13.3")
 }

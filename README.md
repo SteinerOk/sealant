@@ -1,22 +1,25 @@
 # [WIP] Sealant
+
 [![GitHub release](https://img.shields.io/maven-central/v/io.github.steinerok.sealant/di-common)](https://search.maven.org/search?q=g:io.github.steinerok.sealant)
 [![License](https://img.shields.io/badge/license-apache2.0-blue?style=flat-square.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Sealant creates [Dagger] bindings and integrations for Android classes using the [Anvil]. 
-This is meant to be an alternative to [Hilt], for those who'd prefer to enjoy the faster 
+Sealant creates [Dagger] bindings and integrations for Android classes using the [Anvil].
+This is meant to be an alternative to [Hilt], for those who'd prefer to enjoy the faster
 compilation and better flexibility of Anvil.
 
 Since Sealant is an extension upon Anvil, its code generation will be applied to **Kotlin** files
 only.
 
-Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers article [Extending Anvil for Fun and Profit] and Rick Busarow library [Tangle]
+Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers
+article [Extending Anvil for Fun and Profit] and Rick Busarow library [Tangle]
 
 ## Setup
 
 Add dependencies:
+
 ```gradle
 dependencies {
-    def sealant_version = "0.2.3"
+    def sealant_version = "0.2.4"
 
     // Common
     implementation "io.github.steinerok.sealant:di-common:${sealant_version}"
@@ -124,8 +127,13 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
     limitations under the License.
 
 [Anvil]: https://github.com/square/anvil
+
 [Dagger]: https://dagger.dev
+
 [Hilt]: https://dagger.dev/hilt/
+
 [N26 Path to Anvil]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
+
 [Extending Anvil for Fun and Profit]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
+
 [Tangle]: https://rbusarow.github.io/Tangle/

@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.2.4
+
+_2023-05-26_
+
+* Upgrade Kotlin to `1.8.21`, Anvil to `2.4.6` and KotlinPoet to `1.13.2`. This release is not
+  compatible with lower versions of Kotlin and Anvil.
+
 ## Version 0.2.3
 
 _2023-04-07_
@@ -12,7 +19,8 @@ _2023-04-07_
 
 _2023-04-07_
 
-* Upgrade Kotlin to `1.8.20` and Anvil to `2.4.5`. This release is not compatible with lower versions of Kotlin and Anvil.
+* Upgrade Kotlin to `1.8.20` and Anvil to `2.4.5`. This release is not compatible with lower
+  versions of Kotlin and Anvil.
 
 ## Version 0.2.1
 
@@ -24,7 +32,8 @@ _2023-02-13_
 
 _2023-01-13_
 
-* Upgrade Kotlin to `1.8.0` and Anvil to `2.4.4`. This release is not compatible with lower versions of Kotlin and Anvil.
+* Upgrade Kotlin to `1.8.0` and Anvil to `2.4.4`. This release is not compatible with lower
+  versions of Kotlin and Anvil.
 
 ## Version 0.1.0
 

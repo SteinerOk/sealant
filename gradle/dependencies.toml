@@ -27,7 +27,7 @@ material-native = "1.9.0"
 timber = "5.0.1"
 dagger = "2.46.1"
 #
-kotlinpoet = "1.13.2"
+kotlinpoet = "1.14.2"
 auto-service-main = "1.1.0"
 auto-service-ksp = "1.0.0"
 # Testing instruments

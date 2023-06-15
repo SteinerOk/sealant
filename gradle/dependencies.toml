@@ -28,7 +28,7 @@ timber = "5.0.1"
 dagger = "2.46.1"
 #
 kotlinpoet = "1.14.2"
-auto-service-main = "1.1.0"
+auto-service-main = "1.1.1"
 auto-service-ksp = "1.0.0"
 # Testing instruments
 junit4 = "4.13.2"

@@ -1,5 +1,5 @@
 [versions]
-gradle = "8.1.1"
+gradle = "8.2.1"
 javaToolchain = "17"
 android-buildToolsVersion = "34.0.0"
 android-ndkVersion = "25.2.9519653"

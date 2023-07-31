@@ -17,7 +17,7 @@ val Project.libs: LibrariesForLibs
     get() = the()
 
 @Suppress("UnstableApiUsage")
-val commonAndroidConfiguration: CommonExtension<*, *, *, *>.() -> Unit = {
+val commonAndroidConfiguration: CommonExtension<*, *, *, *, *>.() -> Unit = {
     buildToolsVersion = versions.android.buildToolsVersion.get()
     ndkVersion = versions.android.ndkVersion.get()
     compileSdk = versions.android.compileSdk.get().toInt()
@@ -34,13 +34,6 @@ val commonAndroidConfiguration: CommonExtension<*, *, *, *>.() -> Unit = {
         androidTestImplementation(libs.androidx.test.coreKtx)
         androidTestImplementation(libs.androidx.test.ext.junit)
         androidTestImplementation(libs.androidx.test.ext.junitKtx)
-    }
-
-    // Can remove this once https://issuetracker.google.com/issues/260059413 is fixed.
-    // See https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

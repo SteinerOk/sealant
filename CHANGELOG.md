@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.2.6
+
+_2023-09-03_
+
+* Upgrade Kotlin to `1.9.10`.
+* Fix compatibility with Dagger `2.48`.
+
 ## Version 0.2.5
 
 _2023-07-31_

@@ -19,7 +19,7 @@ Add dependencies:
 
 ```gradle
 dependencies {
-    def sealant_version = "0.2.5"
+    def sealant_version = "0.2.6"
 
     // Common
     implementation "io.github.steinerok.sealant:di-common:${sealant_version}"

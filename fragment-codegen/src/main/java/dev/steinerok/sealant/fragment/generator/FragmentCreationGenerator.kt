@@ -32,6 +32,7 @@ import dev.steinerok.sealant.core.ClassNames
 import dev.steinerok.sealant.core.FqNames
 import dev.steinerok.sealant.core.FunSpec
 import dev.steinerok.sealant.core.InterfaceSpec
+import dev.steinerok.sealant.core.ParameterSpec
 import dev.steinerok.sealant.core.SealantFeature
 import dev.steinerok.sealant.core.addContributesTo
 import dev.steinerok.sealant.core.buildFile
@@ -54,7 +55,7 @@ import java.io.File
  *     @Binds
  *     @IntoMap
  *     @FragmentKey(<Type>::class)
- *     public fun <Type>.bind(): Fragment
+ *     public fun bind(instance: <Type>): Fragment
  * }
  * ```
  */
@@ -118,7 +119,7 @@ public class FragmentCreationGenerator : AlwaysApplicableCodeGenerator {
                             }
                         )
                         addModifiers(KModifier.ABSTRACT)
-                        receiver(origClassName)
+                        addParameter(ParameterSpec("instance", origClassName))
                         returns(ClassNames.androidxFragment)
                     }
                 )

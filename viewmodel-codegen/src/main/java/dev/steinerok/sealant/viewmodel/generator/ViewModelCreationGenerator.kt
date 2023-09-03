@@ -33,6 +33,7 @@ import dev.steinerok.sealant.core.FqNames
 import dev.steinerok.sealant.core.FunSpec
 import dev.steinerok.sealant.core.InterfaceSpec
 import dev.steinerok.sealant.core.ObjectSpec
+import dev.steinerok.sealant.core.ParameterSpec
 import dev.steinerok.sealant.core.SealantFeature
 import dev.steinerok.sealant.core.addContributesTo
 import dev.steinerok.sealant.core.buildFile
@@ -71,7 +72,7 @@ import java.io.File
  *   @IntoMap
  *   @ViewModelKey(<ViewModel>::class)
  *   @SealantViewModelMap
- *   public fun <ViewModel>.bind(): ViewModel
+ *   public fun bind(instance: <ViewModel>): ViewModel
  * }
  * ```
  *
@@ -170,7 +171,7 @@ public class ViewModelCreationGenerator : AlwaysApplicableCodeGenerator {
                         )
                         addAnnotation(ClassNames.sealantViewModelMap)
                         addModifiers(KModifier.ABSTRACT)
-                        receiver(origClassName)
+                        addParameter(ParameterSpec("instance", origClassName))
                         returns(ClassNames.androidxViewModel)
                     }
                 )

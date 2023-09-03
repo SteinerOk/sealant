@@ -38,6 +38,7 @@ import dev.steinerok.sealant.core.ClassSpec
 import dev.steinerok.sealant.core.FqNames
 import dev.steinerok.sealant.core.FunSpec
 import dev.steinerok.sealant.core.InterfaceSpec
+import dev.steinerok.sealant.core.ParameterSpec
 import dev.steinerok.sealant.core.PropertySpec
 import dev.steinerok.sealant.core.SealantFeature
 import dev.steinerok.sealant.core.addContributesTo
@@ -64,7 +65,7 @@ import java.io.File
  *     @Binds
  *     @IntoMap
  *     @ActivityKey(<Type>::class)
- *     public fun <Type>_SealantInjector.bind(): AnvilInjector<*>
+ *     public fun bind(instance: <Type>_SealantInjector): AnvilInjector<*>
  * }
  * ```
  */
@@ -134,7 +135,7 @@ public class AppcomponentInjectionGenerator : AlwaysApplicableCodeGenerator {
                             }
                         )
                         addModifiers(KModifier.ABSTRACT)
-                        receiver(injectorClassName)
+                        addParameter(ParameterSpec("instance", injectorClassName))
                         returns(ClassNames.sealantInjector.parameterizedBy(STAR))
                     }
                 )

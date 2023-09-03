@@ -83,7 +83,7 @@ import java.io.File
  *     @IntoMap
  *     @StringKey("scope_pkg.<Scope>")
  *     @SealantViewModelMap.SubcomponentMap
- *     public fun <Scope>_SealantViewModelSubcomponent.Factory.bind(): SealantViewModelSubcomponent.Factory
+ *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
  * }
  *
  * @ContributesTo(scope = <Scope>::class)
@@ -204,7 +204,12 @@ public class ViewModelIntegrationGenerator : AlwaysApplicableCodeGenerator {
                         )
                         addAnnotation(ClassNames.sealantViewModelMapSubcomponentMap)
                         addModifiers(KModifier.ABSTRACT)
-                        receiver(vmsClassName.nestedClass("Factory"))
+                        addParameter(
+                            ParameterSpec(
+                                "instance",
+                                vmsClassName.nestedClass("Factory")
+                            )
+                        )
                         returns(ClassNames.sealantViewModelSubcomponentFactory)
                     }
                 )

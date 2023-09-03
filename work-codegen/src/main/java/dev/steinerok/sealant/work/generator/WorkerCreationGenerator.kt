@@ -34,6 +34,7 @@ import dev.steinerok.sealant.core.ClassNames
 import dev.steinerok.sealant.core.FqNames
 import dev.steinerok.sealant.core.FunSpec
 import dev.steinerok.sealant.core.InterfaceSpec
+import dev.steinerok.sealant.core.ParameterSpec
 import dev.steinerok.sealant.core.SealantFeature
 import dev.steinerok.sealant.core.addContributesTo
 import dev.steinerok.sealant.core.buildFile
@@ -63,7 +64,7 @@ import java.io.File
  *     @IntoMap
  *     @StringKey("pkg.<Worker>")
  *     @SealantWorkerAssistedFactoryMap
- *     public fun <Worker>_AssistedFactory.bind(): WorkerAssistedFactory<out ListenableWorker>
+ *     public fun bind(instance: <Worker>_AssistedFactory): WorkerAssistedFactory<out ListenableWorker>
  * }
  * ```
  */
@@ -160,7 +161,7 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
                         )
                         addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
                         addModifiers(KModifier.ABSTRACT)
-                        receiver(afClassName)
+                        addParameter(ParameterSpec("instance", afClassName))
                         returns(ClassNames.workerAssistedFactoryOutListenableWorker)
                     }
                 )

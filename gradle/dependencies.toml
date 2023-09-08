@@ -6,7 +6,7 @@ androidPlugin = "8.1.1"
 versionsPlugin = "0.48.0"
 spotlessPlugin = "6.21.0"
 ktlintTool = "0.49.1"
-anvilPlugin = "2.4.7"
+anvilPlugin = "2.4.8"
 grgitPlugin = "5.2.0"
 mavenPublishPlugin = "0.25.3"
 # KotlinX libraries
@@ -87,7 +87,8 @@ kotlinpoet-core = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoe
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 kotlinpoet-kotlinxMetadata = { module = "com.squareup:kotlinpoet-metadata", version.ref = "kotlinpoet" }
 #
-anvil-annotations = { module = "com.squareup.anvil:annotations", version.ref = "anvilPlugin" }
+anvil-annotations-core = { module = "com.squareup.anvil:annotations", version.ref = "anvilPlugin" }
+anvil-annotations-optional = { module = "com.squareup.anvil:annotations-optional", version.ref = "anvilPlugin" }
 anvil-compiler-api = { module = "com.squareup.anvil:compiler-api", version.ref = "anvilPlugin" }
 anvil-compiler-core = { module = "com.squareup.anvil:compiler", version.ref = "anvilPlugin" }
 anvil-compiler-utils = { module = "com.squareup.anvil:compiler-utils", version.ref = "anvilPlugin" }

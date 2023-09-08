@@ -55,7 +55,15 @@ private const val componentPkg = "dev.steinerok.sealant.core"
 public object ClassNames {
     public val optIn: ClassName = ClassName("kotlin", "OptIn")
 
-    public val singleIn: ClassName = ClassName("dev.steinerok.di.common", "SingleIn")
+    public val singleIn: ClassName = ClassName(
+        "com.squareup.anvil.annotations.optional",
+        "SingleIn"
+    )
+
+    public val forScope: ClassName = ClassName(
+        "com.squareup.anvil.annotations.optional",
+        "ForScope"
+    )
 
     public val experimentalSealantApi: ClassName = ClassName(
         "dev.steinerok.sealant.maintenance",
@@ -111,7 +119,8 @@ public object ClassNames {
  *
  */
 public object FqNames {
-    public val singleIn: FqName = FqName("org.steinerok.di.common.SingleIn")
+    public val singleIn: FqName = FqName("com.squareup.anvil.annotations.optional.SingleIn")
+    public val forScope: FqName = FqName("com.squareup.anvil.annotations.optional.ForScope")
 
     public val sealantConfiguration: FqName = FqName("$componentPkg.SealantConfiguration")
 

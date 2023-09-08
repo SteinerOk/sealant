@@ -14,7 +14,7 @@ dependencies {
     api(libs.kotlinpoet.core)
 
     implementation(libs.dagger.runtime)
-    implementation(libs.anvil.annotations)
+    implementation(libs.anvil.annotations.core)
     implementation(libs.anvil.compiler.utils)
 
     api(projects.sealant.coreCodegen)

@@ -21,7 +21,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.savedstate.SavedStateRegistryOwner
-import dev.steinerok.di.common.cast
 import dev.steinerok.sealant.maintenance.internal.InternalSealantApi
 import javax.inject.Provider
 
@@ -63,18 +62,18 @@ public class SealantViewModelFactory internal constructor(
                 modelClass.getAnnotation(ContributesViewModel::class.java)?.scope?.java
             ) {
                 "Expected the @ContributesViewModel-annotated class '${modelClass.name}' " +
-                    "but required annotation was not found."
+                        "but required annotation was not found."
             }
             val wmfOwner = requireNotNull(vmSubcomponentFactoryMap[scopeClass.name]) {
                 "Expected the Sealant Subcomponent factory class '${scopeClass.name}' to be " +
-                    "available in the multi-binding of @SealantViewModelMap.SubcomponentMap " +
-                    "but none was found. Found only: ${vmSubcomponentFactoryMap.keys.toList()}"
-            }.get().create(handle).cast<ViewModelFactoriesOwner>()
+                        "available in the multi-binding of @SealantViewModelMap.SubcomponentMap " +
+                        "but none was found. Found only: ${vmSubcomponentFactoryMap.keys.toList()}"
+            }.get().create(handle) as ViewModelFactoriesOwner
             @Suppress("UNCHECKED_CAST")
             return requireNotNull(wmfOwner.vmProviderMap[modelClass]) {
                 "Expected the @ContributesViewModel-annotated class '${modelClass.name}' to be " +
-                    "available in the multi-binding of @SealantViewModelMap but " +
-                    "none was found. Found only: ${wmfOwner.vmProviderMap.keys.toList()}"
+                        "available in the multi-binding of @SealantViewModelMap but " +
+                        "none was found. Found only: ${wmfOwner.vmProviderMap.keys.toList()}"
             }.get() as T
         }
     }

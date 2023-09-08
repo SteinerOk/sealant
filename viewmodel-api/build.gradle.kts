@@ -9,7 +9,8 @@ android {
 }
 
 dependencies {
-    api(projects.sealant.diCommon)
+    implementation(libs.anvil.annotations.optional)
+
     api(projects.sealant.coreApi)
 
     api(libs.androidx.activity.mainKtx)

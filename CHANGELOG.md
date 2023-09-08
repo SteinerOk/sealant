@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.3.0
+
+_2023-09-09_
+
+* Upgrade Anvil to `2.4.8`.
+* Use `@SingleIn` annotation from new `annotations-optional` artifact.
+
 ## Version 0.2.6
 
 _2023-09-03_

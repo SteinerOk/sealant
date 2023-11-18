@@ -20,7 +20,7 @@ tasks.wrapper {
 }
 
 tasks.clean {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }
 
 if (rootProject.file("local.properties").exists()) {

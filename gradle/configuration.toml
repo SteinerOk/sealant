@@ -1,9 +1,9 @@
 [versions]
-gradle = "8.2.1"
+gradle = "8.4"
 javaToolchain = "17"
 android-buildToolsVersion = "34.0.0"
-android-ndkVersion = "25.2.9519653"
+android-ndkVersion = "26.1.10909125"
 android-compileSdk = "34"
 android-compileSdkExtension = "-"
 android-minSdk = "21"
-android-targetSdk = "33"
+android-targetSdk = "34"

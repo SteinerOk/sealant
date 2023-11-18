@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## Version 0.3.1
+
+_2023-11-18_
+
+* Upgrade Kotlin to `1.9.20` and KotlinPoet to `1.15.0`.
+
 ## Version 0.3.0
 
 _2023-09-09_

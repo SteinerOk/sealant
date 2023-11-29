@@ -20,7 +20,7 @@ androidx-core-main = "1.12.0"
 androidx-fragment = "1.6.2"
 androidx-lifecycle = "2.6.2"
 androidx-savedstate = "1.2.1"
-androidx-work = "2.8.1"
+androidx-work = "2.9.0"
 # Material Design Components and UI
 material-native = "1.10.0"
 #

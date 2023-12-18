@@ -13,7 +13,7 @@ mavenPublishPlugin = "0.25.3"
 kotlinx-coroutines = "1.7.3"
 # AndroidX libraries
 androidx-activity = "1.8.2"
-androidx-annotation-main = "1.7.0"
+androidx-annotation-main = "1.7.1"
 androidx-appcompat = "1.6.1"
 androidx-constraintlayout-main = "2.2.0-alpha13"
 androidx-core-main = "1.12.0"

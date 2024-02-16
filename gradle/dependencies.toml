@@ -10,7 +10,7 @@ anvilPlugin = "2.4.9"
 grgitPlugin = "5.2.1"
 mavenPublishPlugin = "0.27.0"
 # KotlinX libraries
-kotlinx-coroutines = "1.7.3"
+kotlinx-coroutines = "1.8.0"
 # AndroidX libraries
 androidx-activity = "1.8.2"
 androidx-annotation-main = "1.7.1"

@@ -17,7 +17,8 @@ package dev.steinerok.sealant.viewmodel.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.ClassReference
 import com.squareup.anvil.compiler.internal.reference.asClassName
@@ -109,17 +110,17 @@ public class ViewModelCreationGenerator : AlwaysApplicableCodeGenerator {
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.contributesViewModel) &&
-                clazz.getScopeFrom(FqNames.contributesViewModel)
-                    .hasSealantFeatureForScope(SealantFeature.ViewModel)
+                    clazz.getScopeFrom(FqNames.contributesViewModel)
+                        .hasSealantFeatureForScope(SealantFeature.ViewModel)
         }
         .onEach { clazz ->
             require(clazz.isViewModel()) {
                 "The annotation `@SealantViewModel` can only be applied " +
-                    "to classes which extend ${FqNames.androidxViewModel.asString()}"
+                        "to classes which extend ${FqNames.androidxViewModel.asString()}"
             }
         }
         .flatMap { clazz ->
@@ -127,7 +128,10 @@ public class ViewModelCreationGenerator : AlwaysApplicableCodeGenerator {
         }
         .toList()
 
-    private fun generateCreation(codeGenDir: File, clazz: ClassReference): GeneratedFile {
+    private fun generateCreation(
+        codeGenDir: File,
+        clazz: ClassReference,
+    ): GeneratedFileWithSources {
         val packageName = clazz.packageFqName.safePackageString(dotSuffix = false)
         val fileName = clazz.generateClassName().relativeClassName.asString() + "_Creation"
         //
@@ -178,6 +182,12 @@ public class ViewModelCreationGenerator : AlwaysApplicableCodeGenerator {
             }
             addType(bmInterface)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

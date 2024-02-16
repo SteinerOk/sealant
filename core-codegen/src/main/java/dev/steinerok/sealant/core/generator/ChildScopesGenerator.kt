@@ -17,7 +17,8 @@ package dev.steinerok.sealant.core.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.ClassReference
 import com.squareup.anvil.compiler.internal.reference.asClassName
@@ -50,7 +51,7 @@ public class ChildScopesGenerator : AlwaysApplicableCodeGenerator {
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.sealantConfiguration)
@@ -63,7 +64,7 @@ public class ChildScopesGenerator : AlwaysApplicableCodeGenerator {
         }
         .toList()
 
-    private fun generateScopes(codeGenDir: File, clazz: ClassReference): GeneratedFile? {
+    private fun generateScopes(codeGenDir: File, clazz: ClassReference): GeneratedFileWithSources? {
         val hasViewModelSupport = clazz.hasSealantFeatureForScope(SealantFeature.ViewModel)
         if (!hasViewModelSupport) return null
         //
@@ -85,6 +86,12 @@ public class ChildScopesGenerator : AlwaysApplicableCodeGenerator {
             }
             addType(vmScopeClass)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

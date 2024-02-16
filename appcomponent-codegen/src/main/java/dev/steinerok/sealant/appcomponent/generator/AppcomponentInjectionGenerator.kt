@@ -17,7 +17,8 @@ package dev.steinerok.sealant.appcomponent.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.ClassReference
 import com.squareup.anvil.compiler.internal.reference.asClassName
@@ -76,7 +77,7 @@ public class AppcomponentInjectionGenerator : AlwaysApplicableCodeGenerator {
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.injectWith) &&
@@ -91,7 +92,10 @@ public class AppcomponentInjectionGenerator : AlwaysApplicableCodeGenerator {
         }
         .toList()
 
-    private fun generateComponent(codeGenDir: File, clazz: ClassReference): GeneratedFile {
+    private fun generateComponent(
+        codeGenDir: File,
+        clazz: ClassReference,
+    ): GeneratedFileWithSources {
         val packageName = clazz.packageFqName.safePackageString(dotSuffix = false)
         val fileName = clazz.generateClassName().relativeClassName.asString() + "_Injection"
         //
@@ -142,6 +146,12 @@ public class AppcomponentInjectionGenerator : AlwaysApplicableCodeGenerator {
             }
             addType(ibmInterface)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

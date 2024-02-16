@@ -17,7 +17,8 @@ package dev.steinerok.sealant.viewmodel.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.ClassReference
 import com.squareup.anvil.compiler.internal.reference.asClassName
@@ -57,7 +58,7 @@ public class ViewModelSubcomponentModuleWrapperGenerator : AlwaysApplicableCodeG
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.contributesToViewModel) &&
@@ -72,7 +73,7 @@ public class ViewModelSubcomponentModuleWrapperGenerator : AlwaysApplicableCodeG
         }
         .toList()
 
-    private fun generateWrapper(codeGenDir: File, clazz: ClassReference): GeneratedFile {
+    private fun generateWrapper(codeGenDir: File, clazz: ClassReference): GeneratedFileWithSources {
         val packageName = clazz.packageFqName.safePackageString(dotSuffix = false)
         val fileName = clazz.generateClassName().relativeClassName.asString() + "_Wrapper"
         //
@@ -95,6 +96,12 @@ public class ViewModelSubcomponentModuleWrapperGenerator : AlwaysApplicableCodeG
             }
             addType(wInterface)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

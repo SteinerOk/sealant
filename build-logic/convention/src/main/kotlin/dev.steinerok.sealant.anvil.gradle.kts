@@ -15,4 +15,5 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
 
 anvil {
     syncGeneratedSources.set(true)
+    trackSourceFiles.set(true)
 }

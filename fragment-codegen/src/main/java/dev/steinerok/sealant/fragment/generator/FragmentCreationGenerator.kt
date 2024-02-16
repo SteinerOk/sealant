@@ -17,7 +17,8 @@ package dev.steinerok.sealant.fragment.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.ClassReference
 import com.squareup.anvil.compiler.internal.reference.asClassName
@@ -66,7 +67,7 @@ public class FragmentCreationGenerator : AlwaysApplicableCodeGenerator {
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.contributesFragment) &&
@@ -84,7 +85,10 @@ public class FragmentCreationGenerator : AlwaysApplicableCodeGenerator {
         }
         .toList()
 
-    private fun generateCreation(codeGenDir: File, clazz: ClassReference): GeneratedFile {
+    private fun generateCreation(
+        codeGenDir: File,
+        clazz: ClassReference,
+    ): GeneratedFileWithSources {
         val packageName = clazz.packageFqName.safePackageString(dotSuffix = false)
         val fileName = clazz.generateClassName().relativeClassName.asString() + "_Creation"
         //
@@ -126,6 +130,12 @@ public class FragmentCreationGenerator : AlwaysApplicableCodeGenerator {
             }
             addType(bmInterface)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

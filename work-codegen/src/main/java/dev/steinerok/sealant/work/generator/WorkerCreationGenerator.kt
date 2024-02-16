@@ -17,7 +17,8 @@ package dev.steinerok.sealant.work.generator
 
 import com.google.auto.service.AutoService
 import com.squareup.anvil.compiler.api.CodeGenerator
-import com.squareup.anvil.compiler.api.GeneratedFile
+import com.squareup.anvil.compiler.api.FileWithContent
+import com.squareup.anvil.compiler.api.GeneratedFileWithSources
 import com.squareup.anvil.compiler.api.createGeneratedFile
 import com.squareup.anvil.compiler.internal.reference.AnvilCompilationExceptionClassReference
 import com.squareup.anvil.compiler.internal.reference.ClassReference
@@ -75,18 +76,18 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
         codeGenDir: File,
         module: ModuleDescriptor,
         projectFiles: Collection<KtFile>
-    ): Collection<GeneratedFile> = projectFiles
+    ): Collection<FileWithContent> = projectFiles
         .classAndInnerClassReferences(module)
         .filter { clazz ->
             clazz.isAnnotatedWith(FqNames.contributesWorker) &&
-                clazz.getScopeFrom(FqNames.contributesWorker)
-                    .hasSealantFeatureForScope(SealantFeature.Work)
+                    clazz.getScopeFrom(FqNames.contributesWorker)
+                        .hasSealantFeatureForScope(SealantFeature.Work)
         }
         .onEach { clazz ->
             if (!clazz.isWorker()) {
                 throw AnvilCompilationExceptionClassReference(
                     message = "The annotation `@SealantWorker` can only be applied " +
-                        "to classes which extend ${FqNames.androidxListenableWorker.asString()}",
+                            "to classes which extend ${FqNames.androidxListenableWorker.asString()}",
                     classReference = clazz
                 )
             }
@@ -95,19 +96,19 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
             if (clazz.constructors.size != 1 || constructor == null) {
                 throw AnvilCompilationExceptionClassReference(
                     message = "Worker class, witch is annotated `@SealantWorker`, must have " +
-                        "only one constructor and it must be annotated `@AssistedInject`",
+                            "only one constructor and it must be annotated `@AssistedInject`",
                     classReference = clazz
                 )
             }
             val appContextParam = constructor.parameters.firstOrNull { param ->
                 param.isAnnotatedWith(FqNames.assisted) &&
-                    param.type().asClassReference().fqName == FqNames.context &&
-                    param.name == "appContext"
+                        param.type().asClassReference().fqName == FqNames.context &&
+                        param.name == "appContext"
             }
             val paramsParam = constructor.parameters.firstOrNull { param ->
                 param.isAnnotatedWith(FqNames.assisted) &&
-                    param.type().asClassReference().fqName == FqNames.workerParameters &&
-                    param.name == "workerParams"
+                        param.type().asClassReference().fqName == FqNames.workerParameters &&
+                        param.name == "workerParams"
             }
             val assistedParamsCount = constructor.parameters.filter { param ->
                 param.isAnnotatedWith(FqNames.assisted)
@@ -115,9 +116,9 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
             if (appContextParam == null || paramsParam == null || assistedParamsCount != 2) {
                 throw AnvilCompilationExceptionClassReference(
                     message = "Your constructor witch annotated `@AssistedInject` must have" +
-                        "only 2 parameters annotated `@Assisted`: " +
-                        "`appContext` with type ${FqNames.context} and " +
-                        "`workerParams` with type ${FqNames.workerParameters}",
+                            "only 2 parameters annotated `@Assisted`: " +
+                            "`appContext` with type ${FqNames.context} and " +
+                            "`workerParams` with type ${FqNames.workerParameters}",
                     classReference = clazz
                 )
             }
@@ -127,7 +128,10 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
         }
         .toList()
 
-    private fun generateCreation(codeGenDir: File, clazz: ClassReference): GeneratedFile {
+    private fun generateCreation(
+        codeGenDir: File,
+        clazz: ClassReference,
+    ): GeneratedFileWithSources {
         val packageName = clazz.packageFqName.safePackageString(dotSuffix = false)
         val fileName = clazz.generateClassName().relativeClassName.asString() + "_Creation"
         //
@@ -168,6 +172,12 @@ public class WorkerCreationGenerator : AlwaysApplicableCodeGenerator {
             }
             addType(bmInterface)
         }
-        return createGeneratedFile(codeGenDir, packageName, fileName, content)
+        return createGeneratedFile(
+            codeGenDir = codeGenDir,
+            packageName = packageName,
+            fileName = fileName,
+            content = content,
+            sourceFile = clazz.containingFileAsJavaFile,
+        )
     }
 }

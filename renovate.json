@@ -8,7 +8,7 @@
       "groupName": "Kotlin, KSP",
       "groupSlug": "kotlin",
       "matchPackagePrefixes": [
-        "com.google.devtools.ksp",
+        "com.google.devtools.ksp"
       ],
       "matchPackagePatterns": [
         "org.jetbrains.kotlin.*"
@@ -20,6 +20,11 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "description": "Disable updates to SNAPSHOTS",
+      "matchDatasources": ["maven"],
+      "allowedVersions": "!/SNAPSHOT$/"
     }
   ]
 }

@@ -2,7 +2,7 @@
 gradle = "8.6"
 javaToolchain = "17"
 android-buildToolsVersion = "34.0.0"
-android-ndkVersion = "26.1.10909125"
+android-ndkVersion = "26.2.11394342"
 android-compileSdk = "34"
 android-compileSdkExtension = "-"
 android-minSdk = "21"

@@ -6,15 +6,15 @@ plugins {
 }
 
 dependencies {
-    ksp(libs.auto.service.processor.ksp)
+    ksp(libs.auto.service.ksp)
     compileOnly(libs.auto.service.annotations)
 
     api(libs.kotlin.compiler.embeddable)
     api(libs.anvil.compiler.api)
-    api(libs.kotlinpoet.core)
+    api(libs.kotlinpoet)
 
     implementation(libs.dagger.runtime)
-    implementation(libs.anvil.annotations.core)
+    implementation(libs.anvil.annotations)
     implementation(libs.anvil.compiler.utils)
 
     api(projects.sealant.coreCodegen)

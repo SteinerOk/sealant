@@ -13,6 +13,6 @@ dependencies {
 
     api(projects.sealant.coreApi)
 
-    api(libs.androidx.activity.mainKtx)
-    api(libs.androidx.fragment.mainKtx)
+    api(libs.androidx.activity)
+    api(libs.androidx.fragment)
 }

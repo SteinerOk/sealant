@@ -11,5 +11,5 @@ android {
 dependencies {
     api(projects.sealant.coreApi)
 
-    api(libs.androidx.fragment.mainKtx)
+    api(libs.androidx.fragment)
 }

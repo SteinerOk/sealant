@@ -42,3 +42,11 @@ include(":appcomponent-api", ":appcomponent-codegen")
 include(":fragment-api", ":fragment-codegen")
 include(":viewmodel-api", ":viewmodel-codegen")
 include(":work-api", ":work-codegen")
+
+include(
+    ":sample:core-di",
+    ":sample:feature-entrance",
+    ":sample:feature-home",
+    ":sample:feature-home-kapt",
+    ":sample:app"
+)

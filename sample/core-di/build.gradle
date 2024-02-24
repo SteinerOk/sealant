@@ -1,0 +1,13 @@
+plugins {
+    id "dev.steinerok.sealant.kotlin-library"
+    id "dev.steinerok.sealant.anvil"
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    implementation libs.anvil.annotations.optional
+    implementation projects.sealant.diCommon
+    implementation projects.sealant.coreApi
+    anvil projects.sealant.coreCodegen
+}

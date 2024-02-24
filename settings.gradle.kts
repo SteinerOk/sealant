@@ -1,5 +1,5 @@
 pluginManagement {
-    includeBuild("build-logic-settings")
+    includeBuild("gradle/build-logic-settings")
     repositories {
         gradlePluginPortal()
         google()
@@ -34,7 +34,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "sealant"
 
-includeBuild("build-logic")
+includeBuild("gradle/build-logic")
 
 include(":di-common")
 include(":core-api", ":core-codegen")

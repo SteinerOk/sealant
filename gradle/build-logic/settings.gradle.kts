@@ -11,10 +11,10 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("configuration") {
-            from(files("../gradle/configuration.toml"))
+            from(files("../configuration.toml"))
         }
         create("libs") {
-            from(files("../gradle/dependencies.toml"))
+            from(files("../dependencies.toml"))
         }
     }
 }

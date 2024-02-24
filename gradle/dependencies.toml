@@ -73,7 +73,6 @@ androidx-lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecyc
 androidx-savedstate = { module = "androidx.savedstate:savedstate", version.ref = "androidx-savedstate" }
 androidx-savedstateKtx = { module = "androidx.savedstate:savedstate-ktx", version.ref = "androidx-savedstate" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "androidx-work" }
-androidx-work-runtimeKtx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 #
 material = { module = "com.google.android.material:material", version.ref = "material" }
 #

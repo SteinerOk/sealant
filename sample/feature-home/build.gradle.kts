@@ -31,7 +31,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.work.runtimeKtx)
 
     implementation(libs.timber)
 

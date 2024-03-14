@@ -11,7 +11,6 @@ plugins {
 val Project.versions: VersionAccessors
     get() = the<LibrariesForConfiguration>().versions
 
-@Suppress("UnstableApiUsage")
 android {
     defaultConfig {
         targetSdk = versions.android.targetSdk.get().toInt()

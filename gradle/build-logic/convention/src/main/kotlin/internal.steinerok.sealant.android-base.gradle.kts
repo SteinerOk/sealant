@@ -16,8 +16,7 @@ val Project.versions: VersionAccessors
 val Project.libs: LibrariesForLibs
     get() = the()
 
-@Suppress("UnstableApiUsage")
-val commonAndroidConfiguration: CommonExtension<*, *, *, *, *>.() -> Unit = {
+val commonAndroidConfiguration: CommonExtension<*, *, *, *, *, *>.() -> Unit = {
     buildToolsVersion = versions.android.buildToolsVersion.get()
     ndkVersion = versions.android.ndkVersion.get()
     compileSdk = versions.android.compileSdk.get().toInt()

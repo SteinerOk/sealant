@@ -3,7 +3,6 @@ plugins {
     id("internal.steinerok.sealant.android-base")
 }
 
-@Suppress("UnstableApiUsage")
 android {
     defaultConfig {
         consumerProguardFiles("consumer-rules.pro")

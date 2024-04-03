@@ -1,13 +1,13 @@
 plugins {
-    id("com.gradle.enterprise")
+    id("com.gradle.develocity")
 }
 
 val publishBuildScan = false
 
-gradleEnterprise {
+develocity {
     buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
-        publishAlwaysIf(publishBuildScan)
+        termsOfUseUrl = "https://gradle.com/terms-of-service"
+        termsOfUseAgree = "yes"
+        publishing.onlyIf { publishBuildScan }
     }
 }

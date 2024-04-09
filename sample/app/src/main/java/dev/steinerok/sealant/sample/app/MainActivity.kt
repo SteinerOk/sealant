@@ -35,13 +35,13 @@ data class Info2(val time2: String)
 object AppScopeVmSpecificModule {
 
     @Provides
-    fun provideInfo1(handle: SavedStateHandle) = Info1(
+    fun provideInfo1(handle: SavedStateHandle): Info1 = Info1(
         time1 = "${handle.get<String>("time_1")!!}_${Random.nextInt()}"
     )
 
     @Provides
     @SingleIn(SealantViewModelScope::class)
-    fun provideInfo2(handle: SavedStateHandle) = Info2(
+    fun provideInfo2(handle: SavedStateHandle): Info2 = Info2(
         time2 = handle.get<String>("time_2")!!
     )
 }

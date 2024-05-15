@@ -1,7 +1,7 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
-kotlin = "1.9.23"
-kspPlugin = "1.9.23-1.0.20"
+kotlin = "1.9.24"
+kspPlugin = "1.9.24-1.0.20"
 androidPlugin = "8.4.0"
 versionsPlugin = "0.51.0"
 spotlessPlugin = "6.25.0"
@@ -10,7 +10,7 @@ anvilPlugin = "2.5.0-beta04"
 grgitPlugin = "5.2.2"
 mavenPublishPlugin = "0.28.0"
 # KotlinX libraries
-kotlinx-coroutines = "1.8.0"
+kotlinx-coroutines = "1.8.1"
 # AndroidX libraries
 androidx-activity = "1.9.0"
 androidx-annotation = "1.7.1"

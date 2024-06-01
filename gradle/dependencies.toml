@@ -14,11 +14,11 @@ kotlinx-coroutines = "1.8.1"
 # AndroidX libraries
 androidx-activity = "1.9.0"
 androidx-annotation = "1.8.0"
-androidx-appcompat = "1.6.1"
+androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.2.0-alpha13"
 androidx-core = "1.13.1"
 androidx-fragment = "1.7.1"
-androidx-lifecycle = "2.8.0"
+androidx-lifecycle = "2.8.1"
 androidx-savedstate = "1.2.1"
 androidx-work = "2.9.0"
 # Material Design Components and UI

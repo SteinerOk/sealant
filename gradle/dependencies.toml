@@ -29,7 +29,7 @@ dagger = "2.51.1"
 #
 kotlinpoet = "1.17.0"
 auto-service = "1.1.1"
-auto-service-ksp = "1.1.0"
+auto-service-ksp = "1.2.0"
 # Testing instruments
 junit4 = "4.13.2"
 androidx-test-core = "1.5.0"

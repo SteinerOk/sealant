@@ -14,11 +14,6 @@ plugins {
     alias(libs.plugins.kotlin.kapt) apply false
 }
 
-tasks.wrapper {
-    gradleVersion = configuration.versions.gradle.get()
-    distributionType = Wrapper.DistributionType.BIN
-}
-
 tasks.clean {
     delete(rootProject.layout.buildDirectory)
 }

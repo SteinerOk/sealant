@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
 @ContributesFragment(scope = AppScope::class)
 class MainFragment @Inject constructor(
     /* Your dependencies */
-)
+) : Fragment()
 ```
 
 ### ViewModel
@@ -100,9 +100,7 @@ class MainWorker2 @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
     /* Your dependencies */
-) : CoroutineWorker(appContext, params) {
-    override suspend fun doWork(): Result = TODO()
-}
+) : CoroutineWorker(appContext, params)
 ```
 
 ## Contributions

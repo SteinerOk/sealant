@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     id("com.vanniktech.maven.publish")
 }
@@ -26,5 +28,5 @@ publishing {
 
 mavenPublishing {
     signAllPublications()
-    publishToMavenCentral("S01")
+    publishToMavenCentral(SonatypeHost.S01)
 }

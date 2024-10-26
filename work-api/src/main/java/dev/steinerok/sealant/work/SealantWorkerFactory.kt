@@ -29,7 +29,7 @@ private typealias WorkerAssistedFactoryProviderMap = Map<String, @JvmSuppressWil
  *
  */
 public class SealantWorkerFactory @InternalSealantApi constructor(
-    private val wafProviderMap: WorkerAssistedFactoryProviderMap
+    private val wafProviderMap: WorkerAssistedFactoryProviderMap,
 ) : WorkerFactory() {
 
     @OptIn(InternalSealantApi::class)

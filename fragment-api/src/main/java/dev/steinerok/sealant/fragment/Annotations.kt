@@ -37,7 +37,7 @@ public annotation class ContributesFragment(
      * include other contributed bindings, multibindings and Dagger modules. All replaced classes
      * must use the same scope.
      */
-    val replaces: Array<KClass<out Any>> = []
+    val replaces: Array<KClass<out Any>> = [],
 )
 
 /**
@@ -59,5 +59,5 @@ public annotation class FragmentKey(
     /**
      *
      */
-    val value: KClass<out Fragment>
+    val value: KClass<out Fragment>,
 )

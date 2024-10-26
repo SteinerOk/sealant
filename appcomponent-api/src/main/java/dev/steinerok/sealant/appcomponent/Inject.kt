@@ -27,7 +27,7 @@ public typealias InjectorsResolver = (scope: KClass<out Any>, injectable: Any) -
  */
 public fun injectViaSealant(
     injectable: SealantInjectable<*>,
-    injectorsResolver: InjectorsResolver
+    injectorsResolver: InjectorsResolver,
 ) {
     val injectWith = requireNotNull(injectable::class.java.getAnnotation(InjectWith::class.java)) {
         "Injectable class is not annotated @InjectWith, but must"

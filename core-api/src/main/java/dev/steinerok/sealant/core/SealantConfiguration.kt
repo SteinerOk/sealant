@@ -37,5 +37,5 @@ public annotation class SealantConfiguration(
     val addWorkSupport: Boolean,
 
     /**  */
-    val parentScope: KClass<*> = Any::class
+    val parentScope: KClass<out Any> = Unit::class,
 )

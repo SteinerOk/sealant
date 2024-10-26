@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
 public annotation class ContributesWorker(
 
     /** The scope in which to include this contributed Worker */
-    val scope: KClass<out Any>
+    val scope: KClass<out Any>,
 )
 
 /**

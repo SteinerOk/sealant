@@ -28,7 +28,7 @@ private typealias FragmentProviderMap = Map<Class<out Fragment>, @JvmSuppressWil
  * Note this was designed to be used with [FragmentKey].
  */
 public class SealantFragmentFactory @InternalSealantApi constructor(
-    private val fragProviderMap: FragmentProviderMap
+    private val fragProviderMap: FragmentProviderMap,
 ) : FragmentFactory() {
 
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {

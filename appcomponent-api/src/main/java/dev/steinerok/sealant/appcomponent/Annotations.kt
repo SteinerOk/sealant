@@ -37,7 +37,7 @@ import kotlin.reflect.KClass
 public annotation class InjectWith(
 
     /** The scope from which to pull the annotated class's dependencies. */
-    val scope: KClass<out Any>
+    val scope: KClass<out Any>,
 )
 
 /**
@@ -54,5 +54,5 @@ public annotation class InjectWith(
 public annotation class ActivityKey(
 
     /**  */
-    val value: KClass<out ComponentActivity>
+    val value: KClass<out ComponentActivity>,
 )

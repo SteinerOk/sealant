@@ -33,8 +33,12 @@ import javax.inject.Qualifier
  *
  */
 public object FqNames {
-    public val singleIn: FqName = FqName("com.squareup.anvil.annotations.optional.SingleIn")
-    public val forScope: FqName = FqName("com.squareup.anvil.annotations.optional.ForScope")
+    public val singleIn: FqName = FqName(
+        "com.squareup.anvil.annotations.optional.SingleIn"
+    )
+    public val forScope: FqName = FqName(
+        "com.squareup.anvil.annotations.optional.ForScope"
+    )
 
     public val sealantConfiguration: FqName = FqName(
         "dev.steinerok.sealant.core.SealantConfiguration"

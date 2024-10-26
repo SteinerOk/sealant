@@ -59,19 +59,18 @@ public object ClassNames {
         "com.squareup.anvil.annotations.optional", "ForScope"
     )
 
-    public val experimentalSealantApi: ClassName = ClassName(
-        "dev.steinerok.sealant.maintenance", "ExperimentalSealantApi"
-    )
-    public val internalSealantApi: ClassName = ClassName(
-        "dev.steinerok.sealant.maintenance.internal", "InternalSealantApi"
-    )
-
     public val sealantConfiguration: ClassName = ClassName(
         "dev.steinerok.sealant.core", "SealantConfiguration"
     )
-
     public val sealantIntegration: ClassName = ClassName(
         "dev.steinerok.sealant.core", "SealantIntegration"
+    )
+
+    public val experimentalSealantApi: ClassName = ClassName(
+        "dev.steinerok.sealant.core", "ExperimentalSealantApi"
+    )
+    public val internalSealantApi: ClassName = ClassName(
+        "dev.steinerok.sealant.core.internal", "InternalSealantApi"
     )
 
     public val named: ClassName = Named::class.asClassName()

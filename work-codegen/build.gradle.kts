@@ -9,13 +9,14 @@ dependencies {
     ksp(libs.auto.service.ksp)
     compileOnly(libs.auto.service.annotations)
 
-    api(libs.kotlin.compiler.embeddable)
-    api(libs.anvil.compiler.api)
-    api(libs.kotlinpoet)
+    implementation(libs.kotlin.compiler.embeddable)
+    implementation(libs.anvil.compiler.api)
+    implementation(libs.kotlinpoet)
 
     implementation(libs.dagger.runtime)
     implementation(libs.anvil.annotations)
     implementation(libs.anvil.compiler.utils)
 
-    api(projects.sealant.coreCodegen)
+    implementation(projects.sealant.compilerUtils)
+    implementation(projects.sealant.compilerUtilsEmbedded)
 }

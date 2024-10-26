@@ -37,6 +37,7 @@ rootProject.name = "sealant"
 includeBuild("gradle/build-logic")
 
 include(":di-common")
+include(":compiler-utils", ":compiler-utils-embedded")
 include(":core-api", ":core-codegen")
 include(":appcomponent-api", ":appcomponent-codegen")
 include(":fragment-api", ":fragment-codegen")

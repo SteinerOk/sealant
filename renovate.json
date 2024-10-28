@@ -1,29 +1,32 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "packageRules": [
     {
       "groupName": "Kotlin, KSP",
       "groupSlug": "kotlin",
-      "matchPackagePrefixes": [
-        "com.google.devtools.ksp"
-      ],
-      "matchPackagePatterns": [
-        "org.jetbrains.kotlin.*"
+      "matchPackageNames": [
+        "com.google.devtools.ksp{/,}**",
+        "/org.jetbrains.kotlin.*/"
       ]
     },
     {
       "description": "Automatically merge patch-level updates",
-      "matchUpdateTypes": ["patch", "digest"],
+      "matchUpdateTypes": [
+        "patch",
+        "digest"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
     },
     {
       "description": "Disable updates to SNAPSHOTS",
-      "matchDatasources": ["maven"],
+      "matchDatasources": [
+        "maven"
+      ],
       "allowedVersions": "!/SNAPSHOT$/"
     }
   ]

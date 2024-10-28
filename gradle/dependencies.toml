@@ -1,7 +1,7 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
-kotlin = "1.9.25"
-ksp = "1.9.25-1.0.20"
+kotlin = "2.0.21"
+ksp = "2.0.21-1.0.26"
 androidPlugin = "8.7.1"
 versionsPlugin = "0.51.0"
 spotlessPlugin = "6.25.0"
@@ -26,7 +26,7 @@ material = "1.12.0"
 timber = "5.0.1"
 # Dependency Injection
 dagger = "2.52"
-anvil = "2.5.0-beta04"        # Не обновлять, приводит к падению Sealant: https://github.com/square/anvil/issues/953
+anvil = "0.3.3"
 # Tools
 kotlinpoet = "2.0.0"
 auto-service = "1.1.1"
@@ -45,7 +45,7 @@ androidx-test-espresso = "3.6.1"
 #
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
-anvil-gradlePlugin = { group = "com.squareup.anvil", name = "gradle-plugin", version.ref = "anvil" }
+anvil-gradlePlugin = { group = "dev.zacsweers.anvil", name = "gradle-plugin", version.ref = "anvil" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidPlugin" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotlessPlugin" }
 mavenPublish-default-gradlePlugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "mavenPublishPlugin" }
@@ -82,11 +82,11 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 # Dependency Injection
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 dagger-runtime = { module = "com.google.dagger:dagger", version.ref = "dagger" }
-anvil-annotations = { module = "com.squareup.anvil:annotations", version.ref = "anvil" }
-anvil-annotations-optional = { module = "com.squareup.anvil:annotations-optional", version.ref = "anvil" }
-anvil-compiler = { module = "com.squareup.anvil:compiler", version.ref = "anvil" }
-anvil-compiler-api = { module = "com.squareup.anvil:compiler-api", version.ref = "anvil" }
-anvil-compiler-utils = { module = "com.squareup.anvil:compiler-utils", version.ref = "anvil" }
+anvil-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvil" }
+anvil-annotations-optional = { module = "dev.zacsweers.anvil:annotations-optional", version.ref = "anvil" }
+anvil-compiler = { module = "dev.zacsweers.anvil:compiler", version.ref = "anvil" }
+anvil-compiler-api = { module = "dev.zacsweers.anvil:compiler-api", version.ref = "anvil" }
+anvil-compiler-utils = { module = "dev.zacsweers.anvil:compiler-utils", version.ref = "anvil" }
 # Tools
 ksp = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
@@ -118,7 +118,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-anvil = { id = "com.squareup.anvil", version.ref = "anvil" }
+anvil = { id = "dev.zacsweers.anvil", version.ref = "anvil" }
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
 android-library = { id = "com.android.library", version.ref = "androidPlugin" }
 grgit = { id = "org.ajoberstar.grgit", version.ref = "grgitPlugin" }

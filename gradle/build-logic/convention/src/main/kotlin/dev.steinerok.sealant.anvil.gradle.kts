@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
-    id("com.squareup.anvil")
+    id("dev.zacsweers.anvil")
 }
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {

@@ -26,11 +26,9 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.asClassName
 import dagger.Binds
 import dagger.BindsInstance
-import dagger.Component
 import dagger.MembersInjector
 import dagger.Module
 import dagger.Provides
-import dagger.Subcomponent
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -85,8 +83,8 @@ public object ClassNames {
     public val intoMap: ClassName = IntoMap::class.asClassName()
     public val intoSet: ClassName = IntoSet::class.asClassName()
     public val multibinds: ClassName = Multibinds::class.asClassName()
-    public val subcomponentFactory: ClassName = Subcomponent.Factory::class.asClassName()
-    public val componentFactory: ClassName = Component.Factory::class.asClassName()
+    public val subcomponentFactory: ClassName = MergeSubcomponent.Factory::class.asClassName()
+    public val componentFactory: ClassName = MergeComponent.Factory::class.asClassName()
     public val provides: ClassName = Provides::class.asClassName()
     public val daggerFactory: ClassName = Factory::class.asClassName()
     public val provider: ClassName = Provider::class.asClassName()

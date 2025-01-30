@@ -9,7 +9,7 @@ ktlintTool = "1.3.1"
 grgitPlugin = "5.3.0"
 mavenPublishPlugin = "0.30.0"
 # KotlinX libraries
-kotlinx-coroutines = "1.9.0"
+kotlinx-coroutines = "1.10.1"
 # AndroidX libraries
 androidx-activity = "1.9.3"
 androidx-annotation = "1.9.0"

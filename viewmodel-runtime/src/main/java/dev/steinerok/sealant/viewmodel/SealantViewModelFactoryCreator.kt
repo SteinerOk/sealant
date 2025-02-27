@@ -49,7 +49,7 @@ internal constructor(
         delegateFactory: ViewModelProvider.Factory? = null
     ): ViewModelProvider.Factory = fromSsrOwner(fragment, fragment.arguments, delegateFactory)
 
-    private fun fromSsrOwner(
+    public fun fromSsrOwner(
         owner: SavedStateRegistryOwner,
         defaultArgs: Bundle? = null,
         delegateFactory: ViewModelProvider.Factory? = null

@@ -15,4 +15,6 @@ dependencies {
 
     implementation(libs.androidx.activity)
     implementation(libs.androidx.fragment)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
 }

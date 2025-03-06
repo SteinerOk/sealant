@@ -36,33 +36,55 @@ public class SealantViewModelFactoryCreator
 internal constructor(
     private val application: Application,
     @SealantViewModelMap.KeySet private val vmKeySet: @JvmSuppressWildcards Set<Class<out ViewModel>>,
-    @SealantViewModelMap.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>
+    @SealantViewModelMap.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,
 ) {
 
     public fun fromActivity(
         activity: ComponentActivity,
-        delegateFactory: ViewModelProvider.Factory? = null
-    ): ViewModelProvider.Factory = fromSsrOwner(activity, activity.intent?.extras, delegateFactory)
+        delegateFactory: ViewModelProvider.Factory? = activity.defaultViewModelProviderFactory,
+        useLegacySealantFactory: Boolean = false,
+    ): ViewModelProvider.Factory = fromSsrOwner(
+        owner = activity,
+        defaultArgs = activity.intent?.extras,
+        delegateFactory = delegateFactory,
+        useLegacySealantFactory = useLegacySealantFactory,
+    )
 
     public fun fromFragment(
         fragment: Fragment,
-        delegateFactory: ViewModelProvider.Factory? = null
-    ): ViewModelProvider.Factory = fromSsrOwner(fragment, fragment.arguments, delegateFactory)
+        delegateFactory: ViewModelProvider.Factory? = fragment.defaultViewModelProviderFactory,
+        useLegacySealantFactory: Boolean = false,
+    ): ViewModelProvider.Factory = fromSsrOwner(
+        owner = fragment,
+        defaultArgs = fragment.arguments,
+        delegateFactory = delegateFactory,
+        useLegacySealantFactory = useLegacySealantFactory,
+    )
 
     public fun fromSsrOwner(
         owner: SavedStateRegistryOwner,
         defaultArgs: Bundle? = null,
-        delegateFactory: ViewModelProvider.Factory? = null
+        delegateFactory: ViewModelProvider.Factory? = null,
+        useLegacySealantFactory: Boolean = false,
     ): ViewModelProvider.Factory {
         val verifiedDelegateFactory = delegateFactory
             ?: SavedStateViewModelFactory(application, owner, defaultArgs)
-        return SealantViewModelFactory(
-            owner = owner,
-            defaultArgs = defaultArgs,
-            vmKeySet = vmKeySet,
-            delegateFactory = verifiedDelegateFactory,
-            vmSubcomponentFactoryMap = vmSubcomponentFactoryMap
-        )
+        return if (!useLegacySealantFactory) {
+            SealantViewModelFactory(
+                vmKeySet = vmKeySet,
+                delegateFactory = verifiedDelegateFactory,
+                vmSubcomponentFactoryMap = vmSubcomponentFactoryMap,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            LegacySealantViewModelFactory(
+                owner = owner,
+                defaultArgs = defaultArgs,
+                vmKeySet = vmKeySet,
+                delegateFactory = verifiedDelegateFactory,
+                vmSubcomponentFactoryMap = vmSubcomponentFactoryMap,
+            )
+        }
     }
 
     /**

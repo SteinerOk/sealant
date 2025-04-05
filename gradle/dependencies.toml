@@ -2,7 +2,7 @@
 # Language, plugins and tools, mobile-services independent
 kotlin = "1.9.25"
 ksp = "1.9.25-1.0.20"
-androidPlugin = "8.9.0"
+androidPlugin = "8.9.1"
 versionsPlugin = "0.52.0"
 spotlessPlugin = "7.0.2"
 ktlintTool = "1.3.1"

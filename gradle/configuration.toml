@@ -1,8 +1,8 @@
 [versions]
 javaToolchain = "21"
-android-buildToolsVersion = "35.0.1"
+android-buildToolsVersion = "36.0.0"
 android-ndkVersion = "28.0.13004108"
-android-compileSdk = "35"
+android-compileSdk = "36"
 android-compileSdkExtension = "-"
 android-minSdk = "21"
 android-targetSdk = "34"

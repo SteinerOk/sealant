@@ -43,3 +43,13 @@ include(":appcomponent-runtime", ":appcomponent-compiler-ksp", ":appcomponent-co
 include(":fragment-runtime", ":fragment-compiler-ksp", ":fragment-compiler-embedded")
 include(":viewmodel-runtime", ":viewmodel-compiler-ksp", ":viewmodel-compiler-embedded")
 include(":work-runtime", ":work-compiler-ksp", ":work-compiler-embedded")
+
+val sampleDirectory = file("sample")
+if (sampleDirectory.exists() && sampleDirectory.isDirectory) {
+    include(
+        ":sample:core-di",
+        ":sample:feature-entrance",
+        ":sample:feature-home",
+        ":sample:app"
+    )
+}

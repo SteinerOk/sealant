@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DEPRECATION")
+
 package dev.steinerok.sealant.viewmodel
 
 import android.os.Bundle
@@ -81,7 +83,6 @@ public class LegacySealantViewModelFactory internal constructor(
 
     public companion object {
 
-        @Suppress("DEPRECATION")
         @OptIn(InternalSealantApi::class)
         @JvmStatic
         public fun createInternal(

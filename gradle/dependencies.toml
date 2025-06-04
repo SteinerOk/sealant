@@ -28,7 +28,7 @@ timber = "5.0.1"
 dagger = "2.56.2"
 anvil = "2.5.0-beta04"        # Не обновлять, приводит к падению Sealant: https://github.com/square/anvil/issues/953
 # Tools
-kotlinpoet = "2.1.0"
+kotlinpoet = "2.2.0"
 auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 # Testing instruments

@@ -3,8 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
     compilerOptions {
         freeCompilerArgs.addAll(
-            "-Xcontext-receivers",
-            "-Xjvm-default=all",
+            "-Xcontext-parameters",
             "-opt-in=kotlin.RequiresOptIn",
             "-opt-in=kotlin.ExperimentalStdlibApi",
             "-opt-in=kotlin.ExperimentalMultiplatform",

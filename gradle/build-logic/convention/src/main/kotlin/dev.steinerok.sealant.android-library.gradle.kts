@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
     id("com.android.library")
     id("internal.steinerok.sealant.android-base")
@@ -21,10 +23,11 @@ android {
             )
         }
     }
+}
 
-    kotlinOptions {
-        // Enable experimental APIs
-        freeCompilerArgs = freeCompilerArgs + listOf(
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.addAll(
             "-Xexplicit-api=strict",
         )
     }

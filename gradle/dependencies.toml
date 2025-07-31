@@ -2,12 +2,12 @@
 # Language, plugins and tools, mobile-services independent
 kotlin = "2.2.0"
 ksp = "2.2.0-2.0.2"
-androidPlugin = "8.11.0"
+androidPlugin = "8.12.0"
 versionsPlugin = "0.52.0"
-spotlessPlugin = "7.0.4"
+spotlessPlugin = "7.2.1"
 ktlintTool = "1.5.0"
 grgitPlugin = "5.3.2"
-mavenPublishPlugin = "0.33.0"
+mavenPublishPlugin = "0.34.0"
 # KotlinX libraries
 kotlinx-coroutines = "1.10.2"
 # AndroidX libraries
@@ -17,35 +17,35 @@ androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
 androidx-core = "1.16.0"
 androidx-fragment = "1.8.8"
-androidx-lifecycle = "2.9.1"
-androidx-savedstate = "1.3.0"
-androidx-work = "2.10.2"
+androidx-lifecycle = "2.9.2"
+androidx-savedstate = "1.3.1"
+androidx-work = "2.10.3"
 # Material Design Components and UI
 material = "1.12.0"
 #
 timber = "5.0.1"
 # Dependency Injection
-dagger = "2.56.2"
-anvil = "0.4.1"
+dagger = "2.57"
+anvilKsp = "0.4.1"
 # Tools
 kotlinpoet = "2.2.0"
 auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 # Testing instruments
 junit4 = "4.13.2"
-androidx-test-core = "1.6.1"
-androidx-test-monitor = "1.7.2"
-androidx-test-orchestrator = "1.5.1"
-androidx-test-rules = "1.6.1"
-androidx-test-runner = "1.6.2"
-androidx-test-ext-junit = "1.2.1"
-androidx-test-espresso = "3.6.1"
+androidx-test-core = "1.7.0"
+androidx-test-monitor = "1.8.0"
+androidx-test-orchestrator = "1.6.0"
+androidx-test-rules = "1.7.0"
+androidx-test-runner = "1.7.0"
+androidx-test-ext-junit = "1.3.0"
+androidx-test-espresso = "3.7.0"
 
 [libraries]
 #
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
-anvil-gradlePlugin = { group = "dev.zacsweers.anvil", name = "gradle-plugin", version.ref = "anvil" }
+anvilKsp-gradlePlugin = { group = "dev.zacsweers.anvil", name = "gradle-plugin", version.ref = "anvilKsp" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidPlugin" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotlessPlugin" }
 mavenPublish-default-gradlePlugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "mavenPublishPlugin" }
@@ -84,11 +84,11 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 # Dependency Injection
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 dagger-runtime = { module = "com.google.dagger:dagger", version.ref = "dagger" }
-anvil-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvil" }
-anvil-annotations-optional = { module = "dev.zacsweers.anvil:annotations-optional", version.ref = "anvil" }
-anvil-compiler = { module = "dev.zacsweers.anvil:compiler", version.ref = "anvil" }
-anvil-compiler-api = { module = "dev.zacsweers.anvil:compiler-api", version.ref = "anvil" }
-anvil-compiler-utils = { module = "dev.zacsweers.anvil:compiler-utils", version.ref = "anvil" }
+anvilKsp-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvilKsp" }
+anvilKsp-annotations-optional = { module = "dev.zacsweers.anvil:annotations-optional", version.ref = "anvilKsp" }
+anvilKsp-compiler = { module = "dev.zacsweers.anvil:compiler", version.ref = "anvilKsp" }
+anvilKsp-compiler-api = { module = "dev.zacsweers.anvil:compiler-api", version.ref = "anvilKsp" }
+anvilKsp-compiler-utils = { module = "dev.zacsweers.anvil:compiler-utils", version.ref = "anvilKsp" }
 # Tools
 ksp = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
@@ -120,7 +120,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-anvil = { id = "dev.zacsweers.anvil", version.ref = "anvil" }
+anvilKsp = { id = "dev.zacsweers.anvil", version.ref = "anvilKsp" }
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
 android-library = { id = "com.android.library", version.ref = "androidPlugin" }
 grgit = { id = "org.ajoberstar.grgit", version.ref = "grgitPlugin" }

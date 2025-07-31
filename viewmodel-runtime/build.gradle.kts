@@ -9,7 +9,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.anvil.annotations.optional)
+    implementation(libs.anvilKsp.annotations.optional)
 
     api(projects.sealant.coreRuntime)
 

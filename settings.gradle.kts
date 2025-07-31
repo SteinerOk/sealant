@@ -1,7 +1,16 @@
+// See: https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_version_management
+// See: https://github.com/gradle/gradle/tree/master/subprojects/docs/src/samples/android-application
+@Suppress("UnstableApiUsage")
 pluginManagement {
     includeBuild("gradle/build-logic-settings")
     repositories {
-        gradlePluginPortal()
+        gradlePluginPortal {
+            content {
+                excludeGroupAndSubgroups("androidx")
+                excludeGroupAndSubgroups("com.android")
+                excludeGroupAndSubgroups("com.google")
+            }
+        }
         google()
         mavenCentral()
     }
@@ -10,15 +19,26 @@ pluginManagement {
 }
 
 plugins {
-    id("convention-scan")
+    id("convention-develocity")
 }
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
+        gradlePluginPortal {
+            content {
+                includeGroupAndSubgroups("org.gradle")
+            }
+        }
     }
     versionCatalogs {
         create("configuration") {
@@ -37,12 +57,12 @@ rootProject.name = "sealant"
 includeBuild("gradle/build-logic")
 
 include(":di-common")
-include(":compiler-utils", ":compiler-utils-ksp", ":compiler-utils-embedded")
-include(":core-runtime", ":core-compiler-ksp", ":core-compiler-embedded")
-include(":appcomponent-runtime", ":appcomponent-compiler-ksp", ":appcomponent-compiler-embedded")
-include(":fragment-runtime", ":fragment-compiler-ksp", ":fragment-compiler-embedded")
-include(":viewmodel-runtime", ":viewmodel-compiler-ksp", ":viewmodel-compiler-embedded")
-include(":work-runtime", ":work-compiler-ksp", ":work-compiler-embedded")
+include(":compiler-utils", ":compiler-utils-ksp")
+include(":core-runtime", ":core-compiler-ksp")
+include(":appcomponent-runtime", ":appcomponent-compiler-ksp")
+include(":fragment-runtime", ":fragment-compiler-ksp")
+include(":viewmodel-runtime", ":viewmodel-compiler-ksp")
+include(":work-runtime", ":work-compiler-ksp")
 
 val sampleDirectory = file("sample")
 if (sampleDirectory.exists() && sampleDirectory.isDirectory) {

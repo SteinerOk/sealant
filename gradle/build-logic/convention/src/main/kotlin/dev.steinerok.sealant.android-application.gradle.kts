@@ -55,5 +55,4 @@ androidComponents {
         )
     }
     onVariants(selector().withBuildType("release"), resourcesExcludesCallback)
-    onVariants(selector().withBuildType("internal"), resourcesExcludesCallback)
 }

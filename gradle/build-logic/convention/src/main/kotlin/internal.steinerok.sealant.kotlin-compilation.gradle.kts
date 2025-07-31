@@ -4,11 +4,13 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-Xcontext-parameters",
-            "-opt-in=kotlin.RequiresOptIn",
-            "-opt-in=kotlin.ExperimentalStdlibApi",
-            "-opt-in=kotlin.ExperimentalMultiplatform",
-            "-opt-in=kotlin.time.ExperimentalTime",
-            "-opt-in=kotlin.contracts.ExperimentalContracts",
+        )
+        optIn.addAll(
+            "kotlin.RequiresOptIn",
+            "kotlin.ExperimentalStdlibApi",
+            "kotlin.ExperimentalMultiplatform",
+            "kotlin.time.ExperimentalTime",
+            "kotlin.contracts.ExperimentalContracts",
         )
     }
 }

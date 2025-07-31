@@ -16,7 +16,7 @@ dependencies {
     implementation(libs.kotlinpoet)
 
     implementation(libs.dagger.runtime)
-    implementation(libs.anvil.annotations)
+    implementation(libs.anvilKsp.annotations)
 
 
     testImplementation(kotlin("test"))

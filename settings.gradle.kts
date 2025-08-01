@@ -63,6 +63,7 @@ include(":appcomponent-runtime", ":appcomponent-compiler-ksp")
 include(":fragment-runtime", ":fragment-compiler-ksp")
 include(":viewmodel-runtime", ":viewmodel-compiler-ksp")
 include(":work-runtime", ":work-compiler-ksp")
+include(":version-catalog")
 
 val sampleDirectory = file("sample")
 if (sampleDirectory.exists() && sampleDirectory.isDirectory) {

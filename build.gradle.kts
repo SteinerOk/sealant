@@ -1,5 +1,12 @@
 import java.util.Properties
 
+buildscript {
+    dependencies {
+        classpath(libs.kotlin.gradlePlugin)
+        classpath(libs.ksp.gradlePlugin)
+    }
+}
+
 plugins {
     id("dev.steinerok.sealant.publish-root")
     alias(libs.plugins.versions)
@@ -11,7 +18,6 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.mavenPublish) apply false
-    alias(libs.plugins.kotlin.kapt) apply false
 }
 
 tasks.clean {

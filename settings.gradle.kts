@@ -43,10 +43,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("configuration") {
-            from(files("./gradle/configuration.toml"))
-        }
-        create("libs") {
-            from(files("./gradle/dependencies.toml"))
+            from(files("./gradle/configuration.versions.toml"))
         }
     }
 }

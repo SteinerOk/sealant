@@ -1,12 +1,8 @@
-import org.gradle.accessors.dm.LibrariesForLibs
+import dev.steinerok.sealant.libs
 
 plugins {
     id("com.diffplug.spotless")
 }
-
-// https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
-val Project.libs: LibrariesForLibs
-    get() = the()
 
 spotless {
     kotlin {

@@ -11,10 +11,10 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("configuration") {
-            from(files("../configuration.toml"))
+            from(files("../configuration.versions.toml"))
         }
         create("libs") {
-            from(files("../dependencies.toml"))
+            from(files("../libs.versions.toml"))
         }
     }
 }

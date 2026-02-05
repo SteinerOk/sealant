@@ -2,11 +2,26 @@ plugins {
     `kotlin-dsl`
 }
 
-group = "dev.helpdesk.buildlogic"
+group = "dev.steinerok.sealant.buildlogic"
 
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+gradlePlugin {
+    plugins {
+        register("androidApplication") {
+            id = "dev.steinerok.sealant.android-application"
+            implementationClass = "AndroidApplicationConventionPlugin"
+        }
+    }
+    plugins {
+        register("androidLibrary") {
+            id = "dev.steinerok.sealant.android-library"
+            implementationClass = "AndroidLibraryConventionPlugin"
+        }
     }
 }
 
@@ -15,8 +30,8 @@ dependencies {
     implementation(files(configuration.javaClass.superclass.protectionDomain.codeSource.location))
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 
-    implementation(libs.android.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
+    implementation(libs.android.gradleApiPlugin)
     implementation(libs.anvilKsp.gradlePlugin)
     implementation(libs.spotless.gradlePlugin)
     implementation(libs.mavenPublish.default.gradlePlugin)

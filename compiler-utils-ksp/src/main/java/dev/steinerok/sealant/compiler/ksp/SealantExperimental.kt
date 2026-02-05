@@ -40,6 +40,7 @@ private fun scopeForAnnotationsWithScopeParameters(
         annotation.scopeParameter()
     }
 
+    @Suppress("RETURN_VALUE_NOT_USED")
     explicitScopes.scan(
         initial = explicitScopes.first().declaration.requireQualifiedName().asString()
     ) { previous, next ->

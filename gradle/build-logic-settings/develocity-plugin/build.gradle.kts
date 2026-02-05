@@ -11,5 +11,5 @@ java {
 }
 
 dependencies {
-    implementation("com.gradle.develocity:com.gradle.develocity.gradle.plugin:4.1")
+    implementation("com.gradle.develocity:com.gradle.develocity.gradle.plugin:4.3.2")
 }

@@ -21,5 +21,5 @@ tasks.clean {
 if (rootProject.file("local.properties").exists()) {
     val localProperties = Properties()
     localProperties.load(rootProject.file("local.properties").inputStream())
-    localProperties.forEach { key, value -> rootProject.ext.set(key as String, value) }
+    localProperties.forEach { (key, value) -> rootProject.ext.set(key as String, value) }
 }

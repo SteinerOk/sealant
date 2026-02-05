@@ -156,7 +156,7 @@ public inline fun <reified T, R> KSAnnotation.argumentOfTypeWithMapperAtOrNull(
         check(value is T) {
             "Expected argument '$name' of type '${T::class.qualifiedName} but was '${arg.javaClass.name}'."
         }
-        (value as T)?.let { mapper(arg, it) }
+        value?.let { mapper(arg, it) }
     }
 }
 

@@ -1,17 +1,17 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
 kotlin = "2.3.10"
-ksp = "2.3.5"
-androidPlugin = "9.0.0"
+ksp = "2.3.6"
+androidPlugin = "9.1.0"
 versionsPlugin = "0.53.0"
-spotlessPlugin = "8.2.1"
+spotlessPlugin = "8.3.0"
 ktlintTool = "1.8.0"
 grgitPlugin = "5.3.3"
 mavenPublishPlugin = "0.36.0"
 # KotlinX libraries
 kotlinx-coroutines = "1.10.2"
 # AndroidX libraries
-androidx-activity = "1.12.3"
+androidx-activity = "1.12.4"
 androidx-annotation = "1.9.1"
 androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
@@ -25,8 +25,8 @@ material = "1.13.0"
 #
 timber = "5.0.1"
 # Dependency Injection
-dagger = "2.59.1"
-anvilKsp = "0.5.2"
+dagger = "2.59.2"
+anvilKsp = "0.5.3"
 # Tools
 kotlinpoet = "2.2.0"
 auto-service = "1.1.1"

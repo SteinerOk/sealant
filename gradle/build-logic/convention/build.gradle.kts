@@ -12,14 +12,10 @@ java {
 
 gradlePlugin {
     plugins {
-        register("androidApplication") {
-            id = "dev.steinerok.sealant.android-application"
+        register("dev.steinerok.sealant.android-application") {
             implementationClass = "AndroidApplicationConventionPlugin"
         }
-    }
-    plugins {
-        register("androidLibrary") {
-            id = "dev.steinerok.sealant.android-library"
+        register("dev.steinerok.sealant.android-library") {
             implementationClass = "AndroidLibraryConventionPlugin"
         }
     }

@@ -1,25 +1,25 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
-kotlin = "2.3.10"
+kotlin = "2.3.20"
 ksp = "2.3.6"
-androidPlugin = "9.1.0"
+androidPlugin = "9.1.1"
 versionsPlugin = "0.53.0"
-spotlessPlugin = "8.3.0"
+spotlessPlugin = "8.4.0"
 ktlintTool = "1.8.0"
 grgitPlugin = "5.3.3"
 mavenPublishPlugin = "0.36.0"
 # KotlinX libraries
 kotlinx-coroutines = "1.10.2"
 # AndroidX libraries
-androidx-activity = "1.12.4"
-androidx-annotation = "1.9.1"
+androidx-activity = "1.13.0"
+androidx-annotation = "1.10.0"
 androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
-androidx-core = "1.17.0"
+androidx-core = "1.18.0"
 androidx-fragment = "1.8.9"
 androidx-lifecycle = "2.10.0"
 androidx-savedstate = "1.4.0"
-androidx-work = "2.11.1"
+androidx-work = "2.11.2"
 # Material Design Components and UI
 material = "1.13.0"
 #
@@ -28,7 +28,7 @@ timber = "5.0.1"
 dagger = "2.59.2"
 anvilKsp = "0.5.3"
 # Tools
-kotlinpoet = "2.2.0"
+kotlinpoet = "2.3.0"
 auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 # Testing instruments

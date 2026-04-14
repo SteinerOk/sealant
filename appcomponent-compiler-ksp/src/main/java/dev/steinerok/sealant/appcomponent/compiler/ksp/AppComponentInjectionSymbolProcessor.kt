@@ -66,7 +66,7 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * }
  * ```
  */
-public class AppcomponentInjectionSymbolProcessor(
+public class AppComponentInjectionSymbolProcessor(
     private val codeGenerator: CodeGenerator,
     @Suppress("unused") private val options: Map<String, String>,
     @Suppress("unused") private val logger: KSPLogger,
@@ -79,7 +79,7 @@ public class AppcomponentInjectionSymbolProcessor(
             .filter { annotated ->
                 annotated
                     .scope()
-                    .hasSealantFeatureForScope(SealantFeature.Appcomponent)
+                    .hasSealantFeatureForScope(SealantFeature.AppComponent)
             }
             .onEach { _ ->  /* Verification if you need */ }
             .forEach { symbol ->
@@ -155,7 +155,7 @@ public class AppcomponentInjectionSymbolProcessor(
     public class Provider : SymbolProcessorProvider {
 
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-            return AppcomponentInjectionSymbolProcessor(
+            return AppComponentInjectionSymbolProcessor(
                 codeGenerator = environment.codeGenerator,
                 options = environment.options,
                 logger = environment.logger,

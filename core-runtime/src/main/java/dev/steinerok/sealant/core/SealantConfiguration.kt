@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 public annotation class SealantConfiguration(
 
     /**  */
-    val addAppcomponentSupport: Boolean,
+    val addAppComponentSupport: Boolean,
 
     /**  */
     val addViewModelSupport: Boolean,

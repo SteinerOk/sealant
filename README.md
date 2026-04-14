@@ -19,7 +19,7 @@ Add dependencies:
 
 ```gradle
 dependencies {
-    def sealant_version = "0.3.1"
+    def sealant_version = "0.6.0-alpha13"
 
     // Common
     implementation "io.github.steinerok.sealant:di-common:${sealant_version}"
@@ -55,7 +55,7 @@ repositories {
 
 ```kotlin
 @SealantConfiguration(
-    addAppcomponentSupport = true,
+    addAppComponentSupport = true,
     addViewModelSupport = true,
     addFragmentSupport = true,
     addWorkSupport = true,
@@ -63,7 +63,12 @@ repositories {
 abstract class AppScope private constructor()
 ```
 
-### Appcomponent
+```kotlin
+@SealantIntegration(scopes = [AppScope::class])
+class SealantSampleApp : Application()
+```
+
+### AppComponent
 
 ```kotlin
 @InjectWith(AppScope::class)
@@ -110,7 +115,7 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
 
 ## License
 
-    Copyright (c) 2022-2023 Ihor Kushnirenko
+    Copyright (c) 2022-2026 Ihor Kushnirenko
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

@@ -22,7 +22,7 @@ import com.squareup.kotlinpoet.ClassName
  */
 public sealed class SealantFeature(public val name: String, public val index: Int) {
 
-    public data object Appcomponent : SealantFeature(name = "addAppcomponentSupport", index = 0)
+    public data object AppComponent : SealantFeature(name = "addAppComponentSupport", index = 0)
 
     public data object ViewModel : SealantFeature(name = "addViewModelSupport", index = 1)
 

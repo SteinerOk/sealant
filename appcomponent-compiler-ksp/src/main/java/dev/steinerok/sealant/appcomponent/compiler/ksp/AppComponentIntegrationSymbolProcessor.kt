@@ -76,7 +76,7 @@ public class AppComponentIntegrationSymbolProcessor(
             .filterIsInstance<KSClassDeclaration>()
             .map { annotated ->
                 annotated
-                    .findScopesForSealantFeatureIntegration(SealantFeature.Appcomponent)
+                    .findScopesForSealantFeatureIntegration(SealantFeature.AppComponent)
                     .map { annotated to it }
             }
             .flatten()

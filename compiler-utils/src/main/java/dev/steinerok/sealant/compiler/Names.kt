@@ -105,7 +105,10 @@ public object ClassNames {
 
     public val androidBundle: ClassName = ClassName("android.os", "Bundle")
     public val androidContext: ClassName = ClassName("android.content", "Context")
-    public val androidxActivity: ClassName = ClassName("androidx.activity", "ComponentActivity")
+    public val androidActivity: ClassName = ClassName("android.app", "Activity")
+    public val androidBroadcastReceiver: ClassName = ClassName("android.content", "BroadcastReceiver")
+    public val androidContentProvider: ClassName = ClassName("android.content", "ContentProvider")
+    public val androidService: ClassName = ClassName("android.app", "Service")
     public val androidxFragment: ClassName = ClassName("androidx.fragment.app", "Fragment")
     public val androidxFragmentFactory: ClassName = ClassName(
         "androidx.fragment.app", "FragmentFactory"

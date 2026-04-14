@@ -51,14 +51,20 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     public fun activityInjectors(): SealantActivityInjectorsMap
  *
  *     @Multibinds
- *     public fun otherInjectors(): SealantOtherInjectorsMap
+ *     public fun broadcastReceiverInjectors(): BroadcastReceiverInjectorsMap
+ *
+ *     @Multibinds
+ *     public fun contentProviderInjectors(): SealantContentProviderInjectorsMap
+ *
+ *     @Multibinds
+ *     public fun serviceInjectors(): SealantServiceInjectorsMap
  * }
  *
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantInjectorsOwner : SealantInjectorsOwner
  * ```
  */
-public class AppcomponentIntegrationSymbolProcessor(
+public class AppComponentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
     @Suppress("unused") private val options: Map<String, String>,
     @Suppress("unused") private val logger: KSPLogger,
@@ -109,10 +115,24 @@ public class AppcomponentIntegrationSymbolProcessor(
                     }
                 )
                 addFunction(
-                    FunSpec("otherInjectors") {
+                    FunSpec("broadcastReceiverInjectors") {
                         addAnnotation(ClassNames.multibinds)
                         addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantOtherInjectorsMap)
+                        returns(ClassNames.sealantBroadcastReceiverInjectorsMap)
+                    }
+                )
+                addFunction(
+                    FunSpec("contentProviderInjectors") {
+                        addAnnotation(ClassNames.multibinds)
+                        addModifiers(KModifier.ABSTRACT)
+                        returns(ClassNames.sealantContentProviderInjectorsMap)
+                    }
+                )
+                addFunction(
+                    FunSpec("serviceInjectors") {
+                        addAnnotation(ClassNames.multibinds)
+                        addModifiers(KModifier.ABSTRACT)
+                        returns(ClassNames.sealantServiceInjectorsMap)
                     }
                 )
                 addOriginatingKSFile(clazz.requireContainingFile())
@@ -140,7 +160,7 @@ public class AppcomponentIntegrationSymbolProcessor(
     public class Provider : SymbolProcessorProvider {
 
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-            return AppcomponentIntegrationSymbolProcessor(
+            return AppComponentIntegrationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,
                 options = environment.options,
                 logger = environment.logger,

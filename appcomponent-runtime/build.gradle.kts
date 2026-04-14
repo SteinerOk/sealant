@@ -10,6 +10,4 @@ android {
 
 dependencies {
     api(projects.sealant.coreRuntime)
-
-    implementation(libs.androidx.activity)
 }

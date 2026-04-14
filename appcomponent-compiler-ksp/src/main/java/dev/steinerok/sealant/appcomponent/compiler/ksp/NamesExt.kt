@@ -38,8 +38,23 @@ internal val ClassNames.sealantInjectorsOwner
 internal val ClassNames.sealantActivityInjectorsMap
     get() = ClassName(componentPkg, "SealantActivityInjectorsMap")
 
-internal val ClassNames.sealantOtherInjectorsMap
-    get() = ClassName(componentPkg, "SealantOtherInjectorsMap")
+internal val ClassNames.sealantBroadcastReceiverInjectorsMap
+    get() = ClassName(componentPkg, "SealantBroadcastReceiverInjectorsMap")
+
+internal val ClassNames.sealantContentProviderInjectorsMap
+    get() = ClassName(componentPkg, "SealantContentProviderInjectorsMap")
+
+internal val ClassNames.sealantServiceInjectorsMap
+    get() = ClassName(componentPkg, "SealantServiceInjectorsMap")
 
 internal val ClassNames.activityKey
     get() = ClassName(componentPkg, "ActivityKey")
+
+internal val ClassNames.broadcastReceiverKey
+    get() = ClassName(componentPkg, "BroadcastReceiverKey")
+
+internal val ClassNames.contentProviderKey
+    get() = ClassName(componentPkg, "ContentProviderKey")
+
+internal val ClassNames.serviceKey
+    get() = ClassName(componentPkg, "ServiceKey")

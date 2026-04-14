@@ -124,14 +124,15 @@ public class AppcomponentInjectionSymbolProcessor(
                         addAnnotation(ClassNames.binds)
                         addAnnotation(ClassNames.intoMap)
                         addAnnotation(
-                            if (clazz.implements(ClassNames.androidxActivity)) {
-                                AnnotationSpec(ClassNames.activityKey) {
-                                    addMember("%T::class", origClassName)
+                            annotationSpec = let {
+                                val key = when {
+                                    clazz.implements(ClassNames.androidActivity) -> ClassNames.activityKey
+                                    clazz.implements(ClassNames.androidBroadcastReceiver) -> ClassNames.broadcastReceiverKey
+                                    clazz.implements(ClassNames.androidContentProvider) -> ClassNames.contentProviderKey
+                                    clazz.implements(ClassNames.androidService) -> ClassNames.serviceKey
+                                    else -> throw IllegalStateException("Unsupported injectable type: ${clazz.qualifiedName?.asString()}")
                                 }
-                            } else {
-                                AnnotationSpec(ClassNames.classKey) {
-                                    addMember("%T::class", origClassName)
-                                }
+                                AnnotationSpec(key) { addMember("%T::class", origClassName) }
                             }
                         )
                         addModifiers(KModifier.ABSTRACT)

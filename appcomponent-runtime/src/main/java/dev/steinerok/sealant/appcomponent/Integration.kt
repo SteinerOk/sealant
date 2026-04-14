@@ -15,19 +15,32 @@
  */
 package dev.steinerok.sealant.appcomponent
 
-import androidx.activity.ComponentActivity
+import android.app.Activity
+import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.ContentProvider
 import dagger.MembersInjector
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 
 /**
  *
  */
-public typealias SealantActivityInjectorsMap = Map<Class<out ComponentActivity>, SealantInjector<*>>
+public typealias SealantActivityInjectorsMap = Map<Class<out Activity>, SealantInjector<*>>
 
 /**
  *
  */
-public typealias SealantOtherInjectorsMap = Map<Class<*>, SealantInjector<*>>
+public typealias SealantBroadcastReceiverInjectorsMap = Map<Class<out BroadcastReceiver>, SealantInjector<*>>
+
+/**
+ *
+ */
+public typealias SealantContentProviderInjectorsMap = Map<Class<out ContentProvider>, SealantInjector<*>>
+
+/**
+ *
+ */
+public typealias SealantServiceInjectorsMap = Map<Class<out Service>, SealantInjector<*>>
 
 /**
  *
@@ -52,7 +65,13 @@ public interface SealantInjectorsOwner {
     public fun activityInjectors(): SealantActivityInjectorsMap
 
     /**  */
-    public fun otherInjectors(): SealantOtherInjectorsMap
+    public fun broadcastReceiverInjectors(): SealantBroadcastReceiverInjectorsMap
+
+    /**  */
+    public fun contentProviderInjectors(): SealantContentProviderInjectorsMap
+
+    /**  */
+    public fun serviceInjectors(): SealantServiceInjectorsMap
 }
 
 /**

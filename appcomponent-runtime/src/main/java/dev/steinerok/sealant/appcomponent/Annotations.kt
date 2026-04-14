@@ -15,7 +15,10 @@
  */
 package dev.steinerok.sealant.appcomponent
 
-import androidx.activity.ComponentActivity
+import android.app.Activity
+import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.ContentProvider
 import dagger.MapKey
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 import kotlin.reflect.KClass
@@ -40,6 +43,7 @@ public annotation class InjectWith(
     val scope: KClass<out Any>,
 )
 
+
 /**
  *
  */
@@ -54,5 +58,56 @@ public annotation class InjectWith(
 public annotation class ActivityKey(
 
     /**  */
-    val value: KClass<out ComponentActivity>,
+    val value: KClass<out Activity>,
+)
+
+/**
+ *
+ */
+@InternalSealantApi
+@MapKey
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER
+)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class BroadcastReceiverKey(
+
+    /**  */
+    val value: KClass<out BroadcastReceiver>,
+)
+
+/**
+ *
+ */
+@InternalSealantApi
+@MapKey
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER
+)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class ContentProviderKey(
+
+    /**  */
+    val value: KClass<out ContentProvider>,
+)
+
+/**
+ *
+ */
+@InternalSealantApi
+@MapKey
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER
+)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class ServiceKey(
+
+    /**  */
+    val value: KClass<out Service>,
 )

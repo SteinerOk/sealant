@@ -59,7 +59,7 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *         @Provides
  *         public fun provideFragmentFactory(
  *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
- *         ): sealantFragmentFactory = sealantFragmentFactory(fragmentProviderMap)
+ *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
  *     }
  * }
  *

@@ -190,7 +190,7 @@ public class ViewModelIntegrationSymbolProcessor(
                 addFunction(
                     FunSpec("bindVmClassSet") {
                         addAnnotation(ClassNames.multibinds)
-                        addAnnotation(ClassNames.sealantViewModelMapKeySet)
+                        addAnnotation(ClassNames.sealantViewModelSupportKeySet)
                         addModifiers(KModifier.ABSTRACT)
                         returns(ClassNames.viewModelClassSet)
                     }
@@ -204,7 +204,7 @@ public class ViewModelIntegrationSymbolProcessor(
                                 addMember("%S", scopeClassName.reflectionName().replace("..", "."))
                             }
                         )
-                        addAnnotation(ClassNames.sealantViewModelMapSubcomponentMap)
+                        addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
                         addModifiers(KModifier.ABSTRACT)
                         addParameter(
                             ParameterSpec(

@@ -51,11 +51,14 @@ internal val ClassNames.sealantViewModelScope
 internal val ClassNames.sealantViewModelMap
     get() = ClassName(componentPkg, "SealantViewModelMap")
 
-internal val ClassNames.sealantViewModelMapKeySet
-    get() = sealantViewModelMap.nestedClass("KeySet")
+internal val ClassNames.sealantViewModelSupport
+    get() = ClassName(componentPkg, "SealantViewModelSupport")
 
-internal val ClassNames.sealantViewModelMapSubcomponentMap
-    get() = sealantViewModelMap.nestedClass("SubcomponentMap")
+internal val ClassNames.sealantViewModelSupportKeySet
+    get() = sealantViewModelSupport.nestedClass("KeySet")
+
+internal val ClassNames.sealantViewModelSupportSubcomponentMap
+    get() = sealantViewModelSupport.nestedClass("SubcomponentMap")
 
 internal val ClassNames.viewModelKey
     get() = ClassName(componentPkg, "ViewModelKey")

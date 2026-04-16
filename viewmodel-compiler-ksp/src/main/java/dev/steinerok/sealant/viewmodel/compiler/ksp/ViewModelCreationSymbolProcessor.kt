@@ -150,7 +150,7 @@ public class ViewModelCreationSymbolProcessor(
                     FunSpec("provide${origShortName}Key") {
                         addAnnotation(ClassNames.provides)
                         addAnnotation(ClassNames.intoSet)
-                        addAnnotation(ClassNames.sealantViewModelMapKeySet)
+                        addAnnotation(ClassNames.sealantViewModelSupportKeySet)
                         returns(ClassNames.javaClazzOutViewModel)
                         addStatement("return·%T::class.java", origClassName)
                     }

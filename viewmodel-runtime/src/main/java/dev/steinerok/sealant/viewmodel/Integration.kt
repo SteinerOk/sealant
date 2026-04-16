@@ -46,12 +46,12 @@ public interface SealantViewModelSubcomponent {
 
         /**  */
         @InternalSealantApi
-        @get:SealantViewModelMap.KeySet
+        @get:SealantViewModelSupport.KeySet
         public val vmKeySet: Set<Class<out ViewModel>>
 
         /**  */
         @InternalSealantApi
-        @get:SealantViewModelMap.SubcomponentMap
+        @get:SealantViewModelSupport.SubcomponentMap
         public val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<Factory>>
     }
 }

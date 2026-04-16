@@ -123,6 +123,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 anvilKsp = { id = "dev.zacsweers.anvil", version.ref = "anvilKsp" }
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
 android-library = { id = "com.android.library", version.ref = "androidPlugin" }
+android-builtInKotlin = { id = "com.android.built-in-kotlin", version.ref = "androidPlugin" }
 grgit = { id = "org.ajoberstar.grgit", version.ref = "grgitPlugin" }
 grgit-service = { id = "org.ajoberstar.grgit.service", version.ref = "grgitPlugin" }
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublishPlugin" }

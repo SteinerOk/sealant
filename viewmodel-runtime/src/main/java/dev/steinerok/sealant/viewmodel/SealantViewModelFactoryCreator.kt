@@ -35,8 +35,8 @@ public class SealantViewModelFactoryCreator
 @Inject
 internal constructor(
     private val application: Application,
-    @param:SealantViewModelMap.KeySet private val vmKeySet: @JvmSuppressWildcards Set<Class<out ViewModel>>,
-    @param:SealantViewModelMap.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,
+    @param:SealantViewModelSupport.KeySet private val vmKeySet: @JvmSuppressWildcards Set<Class<out ViewModel>>,
+    @param:SealantViewModelSupport.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,
 ) {
 
     public fun fromActivity(

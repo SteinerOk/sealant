@@ -68,10 +68,19 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @SealantViewModelMap.KeySet
  *     public fun bindVmClassSet(): Set<Class<out ViewModel>>
  *
+ *     @Multibinds
+ *     @SealantViewModelSupport.SubcomponentMap
+ *     public fun bindVmSubcomponentFactoryMap(): Map<String, SealantViewModelSubcomponent.Factory>
+ * }
+ *
+ * @Module
+ * @ContributesTo(scope = <Scope>::class)
+ * public interface <Scope>_SealantViewModelSubcomponent_BindsModule {
+ *
  *     @Binds
  *     @IntoMap
  *     @StringKey("scope_pkg.<Scope>")
- *     @SealantViewModelMap.SubcomponentMap
+ *     @SealantViewModelSupport.SubcomponentMap
  *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
  * }
  *
@@ -196,6 +205,24 @@ public class ViewModelIntegrationSymbolProcessor(
                     }
                 )
                 addFunction(
+                    FunSpec("bindVmSubcomponentFactoryMap") {
+                        addAnnotation(ClassNames.multibinds)
+                        addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
+                        addModifiers(KModifier.ABSTRACT)
+                        returns(ClassNames.sealantViewModelSubcomponentFactoryMap)
+                    }
+                )
+                addOriginatingKSFile(clazz.requireContainingFile())
+            }
+            addType(imInterface)
+            //
+            val bmNameStr =
+                "${scopeClassNameStr}_${ClassNames.sealantViewModelSubcomponent.simpleName}_BindsModule"
+            val bmClassName = ClassName(packageName, bmNameStr)
+            val bmInterface = InterfaceSpec(bmClassName) {
+                addContributesToAnnotation(scopeClassName)
+                addAnnotation(ClassNames.module)
+                addFunction(
                     FunSpec("bind") {
                         addAnnotation(ClassNames.binds)
                         addAnnotation(ClassNames.intoMap)
@@ -217,7 +244,7 @@ public class ViewModelIntegrationSymbolProcessor(
                 )
                 addOriginatingKSFile(clazz.requireContainingFile())
             }
-            addType(imInterface)
+            addType(bmInterface)
             //
             val wmfcoNameStr =
                 "${scopeClassNameStr}_${ClassNames.sealantViewModelFactoryCreatorOwner.generateSimpleNameString()}"

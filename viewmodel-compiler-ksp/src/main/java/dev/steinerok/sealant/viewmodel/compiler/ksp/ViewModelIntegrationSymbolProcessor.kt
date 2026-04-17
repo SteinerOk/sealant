@@ -149,7 +149,7 @@ public class ViewModelIntegrationSymbolProcessor(
                 addSuperinterface(ClassNames.sealantViewModelSubcomponent)
                 addAnnotation(
                     AnnotationSpec(ClassNames.singleIn) {
-                        addMember("%T::class", ClassNames.sealantViewModelScope)
+                        addMember("scope·=·%T::class", ClassNames.sealantViewModelScope)
                     }
                 )
                 addAnnotation(

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.steinerok.sealant.compiler.util
+package dev.steinerok.sealant.compiler
 
 import java.util.Locale
 import kotlin.reflect.KClass

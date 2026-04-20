@@ -15,9 +15,6 @@ tasks.test {
 dependencies {
     implementation(libs.kotlinpoet)
 
-    implementation(libs.dagger.runtime)
-    implementation(libs.anvilKsp.annotations)
-
 
     testImplementation(kotlin("test"))
 }

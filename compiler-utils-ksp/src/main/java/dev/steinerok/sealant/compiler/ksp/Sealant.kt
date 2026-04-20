@@ -47,4 +47,3 @@ public fun KSClassDeclaration.parentScopeWithSealantFeature(
     }
     return null
 }
-

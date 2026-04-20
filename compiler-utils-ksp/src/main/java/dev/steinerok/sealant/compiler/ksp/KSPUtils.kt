@@ -14,8 +14,8 @@ import com.google.devtools.ksp.symbol.KSValueArgument
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.toClassName
-import dev.steinerok.sealant.compiler.util.capitalized
-import dev.steinerok.sealant.compiler.util.requireQualifiedName
+import dev.steinerok.sealant.compiler.capitalized
+import dev.steinerok.sealant.compiler.requireQualifiedName
 import kotlin.reflect.KClass
 
 /**

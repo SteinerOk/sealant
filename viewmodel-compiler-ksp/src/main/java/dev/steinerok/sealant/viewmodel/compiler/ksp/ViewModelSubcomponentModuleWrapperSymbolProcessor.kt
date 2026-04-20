@@ -42,7 +42,20 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Should generate:
+ * Description of the module wrapper generation for ViewModel scopes.
+ * This generator creates an intermediary interface to safely include
+ * an existing Dagger module into a specific Anvil ViewModel scope,
+ * typically used when the original module cannot be directly annotated.
+ *
+ * Should generate the following component:
+ *
+ * 1. Module Wrapper Interface:
+ * Acts as a structural bridge by utilizing Dagger's `includes` parameter within
+ * the `@Module` annotation. It takes the target `<Module>` and contributes it
+ * directly to the `ViewModel_<Scope>` via Anvil's `@ContributesTo`. This pattern
+ * is highly useful for seamlessly integrating legacy Dagger modules, third-party
+ * modules, or shared modules into the Anvil graph without needing to modify
+ * their original source code.
  * ```
  * @Module(includes = [<Module>::class])
  * @ContributesTo(scope = ViewModel_<Scope>::class)

@@ -48,11 +48,31 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Should generate:
+ * Description of the WorkManager factory and multibinding module generation.
+ * This generator creates the necessary infrastructure to support constructor
+ * dependency injection for Android's WorkManager via Assisted Injection.
+ * It allows Workers to receive both system-provided parameters and
+ * Dagger-provided dependencies.
+ *
+ * Should generate the following components:
+ *
+ * 1. Worker Assisted Factory:
+ * Generates an interface annotated with `@AssistedFactory`. This acts as a factory
+ * template, instructing Dagger to generate an implementation that combines the runtime
+ * parameters (`Context`, `WorkerParameters`) with dependencies from the graph to
+ * create the target `<Worker>`.
  * ```
  * @AssistedFactory
  * public interface <Worker>_AssistedFactory : WorkerAssistedFactory<<Worker>>
+ * ```
  *
+ * 2. Binds Module for the Factory Map:
+ * Contributes a binding module to the target `<Scope>`. It binds the generated
+ * assisted factory into a Dagger Multibinding Map using a string key corresponding
+ * to the Worker's fully qualified class name. A custom Dagger-aware `WorkerFactory`
+ * will use this map (identified by `@SealantWorkerAssistedFactoryMap`) to locate
+ * the correct factory and instantiate the Worker at runtime.
+ * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Worker>_BindsModule {

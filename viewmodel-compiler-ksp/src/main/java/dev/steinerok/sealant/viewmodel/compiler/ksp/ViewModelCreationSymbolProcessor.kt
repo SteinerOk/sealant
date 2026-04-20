@@ -47,9 +47,20 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Source generator to support Sealant injection of ViewModels.
+ * Description of the ViewModel injection infrastructure generation.
+ * This generator creates the necessary Dagger modules to support Multibinding
+ * for ViewModels, allowing a custom `ViewModelProvider.Factory` to dynamically
+ * instantiate them. The architectural approach closely mirrors Dagger Hilt's
+ * internal code generation but is adapted for custom Anvil scopes.
  *
- * Should generate:
+ * Should generate the following components:
+ *
+ * 1. ViewModel Key Set Module:
+ * Contributes to the main `<Scope>` (conceptually similar to Hilt's
+ * `ActivityRetainedComponent`). It provides the specific ViewModel's class
+ * into a Dagger Set (`@SealantViewModelMap.KeySet`). This allows the dependency
+ * graph to maintain a registry of all available ViewModels, which can be used
+ * for graph validation or by the factory to verify support before instantiation.
  * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
@@ -59,7 +70,14 @@ import dev.steinerok.sealant.compiler.ksp.scope
  *   @SealantViewModelMap.KeySet
  *   public fun provide<ViewModel>Key(): Class<out ViewModel> = <ViewModel>::class.java
  * }
+ * ```
  *
+ * 2. ViewModel Binds Module:
+ * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. It binds
+ * the concrete `<ViewModel>` instance to the base `ViewModel` type inside a
+ * Multibinding Map. This map (`@SealantViewModelMap`) is then injected into
+ * the custom factory to resolve and create the correct ViewModel instance at runtime.
+ * ```
  * @Module
  * @ContributesTo(scope = ViewModel_<Scope>::class)
  * public interface <ViewModel>_BindsModule {
@@ -71,7 +89,15 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * }
  * ```
  *
- * related with Hilt codegen:
+ * Architecture Note (Hilt Comparison):
+ * This setup achieves the same dependency resolution as Hilt's `@HiltViewModel`
+ * codegen. However, there are two key distinctions:
+ * - Scope separation: Hilt splits these between `ViewModelComponent` (for the map)
+ * and `ActivityRetainedComponent` (for the key set).
+ * - Key types: Hilt uses string-based keys (`@StringKey("pkg.$")`), whereas this
+ * implementation utilizes direct class types (`Class<out ViewModel>`) for enhanced
+ * type safety within the designated Sealant scopes.
+ * Related with Hilt codegen:
  * ```
  * public final class $_HiltModules {
  *   @Module

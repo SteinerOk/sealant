@@ -67,6 +67,48 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  * public interface <Scope>_SealantFragmentFactoryOwner : SealantFragmentFactory.Owner
  * ```
  */
+/**
+ * Description of the Fragment factory infrastructure generation.
+ * This generator creates the necessary multibinding and factory setup
+ * to support constructor injection for Fragments within a specific Dagger/Anvil scope.
+ *
+ * Should generate the following components:
+ *
+ * 1. Fragment Integrative Module:
+ * Contributes a module to the `<Scope>` that serves two primary purposes:
+ * First, it declares a `@Multibinds` map for Fragments, ensuring the Dagger
+ * graph compiles successfully even if no specific Fragments have been bound yet.
+ * Second, it provides a custom `SealantFragmentFactory` using the aggregated
+ * map of Fragment providers. This factory is responsible for instantiating
+ * Fragments with their required dependencies injected into their constructors.
+ * ```
+ * @Module
+ * @ContributesTo(scope = <Scope>::class)
+ * public abstract class <Scope>_sealantFragment_IntegrativeModule {
+ *
+ *     @Multibinds
+ *     public abstract fun bindFragmentMap(): Map<Class<out Fragment>, Fragment>
+ *
+ *     public companion object {
+ *         @Provides
+ *         public fun provideFragmentFactory(
+ *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
+ *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
+ *     }
+ * }
+ * ```
+ *
+ * 2. Fragment Factory Owner Interface:
+ * Contributes the `SealantFragmentFactoryOwner` interface to the target `<Scope>`.
+ * This ensures that the component owning this scope (e.g., an Activity or
+ * Application component) officially exposes the `SealantFragmentFactory`.
+ * This allows the Android framework (via the `FragmentManager`) to retrieve and
+ * use the custom factory at runtime for Fragment creation.
+ * ```
+ * @ContributesTo(scope = <Scope>::class)
+ * public interface <Scope>_SealantFragmentFactoryOwner : SealantFragmentFactory.Owner
+ * ```
+ */
 public class FragmentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
     @Suppress("unused") private val options: Map<String, String>,
@@ -77,12 +119,11 @@ public class FragmentIntegrationSymbolProcessor(
         resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .map { annotated ->
+            .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.Fragment)
                     .map { annotated to it }
             }
-            .flatten()
             .distinctBy { it.second }
             .onEach { _ -> /* Verification if you need */ }
             .forEach { symbol ->

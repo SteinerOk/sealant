@@ -40,7 +40,17 @@ import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Should generate:
+ * Description of the ViewModel scope marker generation.
+ * This generator creates an abstract class that acts as a namespace or
+ * structural marker for ViewModel injection within a specific Dagger/Anvil scope.
+ *
+ * Should generate the following component:
+ *
+ * 1. ViewModel Scope Marker Class:
+ * An abstract class with a private constructor, ensuring it cannot be instantiated.
+ * It serves as a foundational type or namespace in the generated code to logically
+ * group, attach, or identify ViewModel multibindings and factories associated
+ * with the target `<Scope>`.
  * ```
  * public abstract class ViewModel_<Scope> private constructor()
  * ```

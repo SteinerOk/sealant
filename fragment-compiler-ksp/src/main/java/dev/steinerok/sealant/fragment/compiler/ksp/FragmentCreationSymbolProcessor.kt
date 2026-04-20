@@ -48,7 +48,20 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Should generate:
+ * Description of the Fragment multibinding module generation.
+ * This generator creates a Dagger module designed to automatically register a
+ * specific Fragment into a Dagger Multibinding Map via Anvil. This is typically
+ * used in architectures that rely on a custom `FragmentFactory` to inject
+ * dependencies directly into Fragment constructors.
+ *
+ * Should generate the following component:
+ *
+ * 1. Fragment Binds Module:
+ * Contributes a binding module to the target `<Scope>`. By combining `@Binds`,
+ * `@IntoMap`, and the custom `@FragmentKey`, it instructs Dagger to map the
+ * specific Fragment `<Type>` to its base `Fragment` class within a Multibinding Map.
+ * This allows the dependency graph to locate and instantiate the correct Fragment
+ * at runtime based on its class type.
  * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)

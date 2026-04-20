@@ -42,7 +42,17 @@ import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Should generate:
+ * Description of the foundational Dagger multibinding module and interface generation.
+ * This generator creates the core infrastructure needed to collect and manage
+ * injectors for various Android components across the specified scope.
+ *
+ * Should generate the following components:
+ *
+ * 1. Integrative Multibinds Module:
+ * Declares Dagger multibinding maps for standard Android components (Activities,
+ * BroadcastReceivers, ContentProviders, and Services). Using `@Multibinds` ensures
+ * that the Dagger graph compiles successfully even if some of these maps are currently
+ * empty (i.e., no specific bindings have been contributed to them yet).
  * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
@@ -59,7 +69,14 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @Multibinds
  *     public fun serviceInjectors(): SealantServiceInjectorsMap
  * }
+ * ```
  *
+ * 2. Injectors Owner Interface:
+ * Contributes the `SealantInjectorsOwner` interface to the target `<Scope>`.
+ * This ensures that the component owning this scope (typically the Application component)
+ * exposes the necessary injector maps. This allows the dependency dispatcher to retrieve
+ * and execute the correct injector for a given Android component at runtime.
+ * ```
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantInjectorsOwner : SealantInjectorsOwner
  * ```
@@ -74,12 +91,11 @@ public class AppComponentIntegrationSymbolProcessor(
         resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .map { annotated ->
+            .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.AppComponent)
                     .map { annotated to it }
             }
-            .flatten()
             .distinctBy { it.second }
             .onEach { _ -> /* Verification if you need */ }
             .forEach { symbol ->

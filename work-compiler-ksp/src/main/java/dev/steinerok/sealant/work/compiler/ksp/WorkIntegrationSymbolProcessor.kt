@@ -46,7 +46,19 @@ import dev.steinerok.sealant.compiler.ksp.parentScopeWithSealantFeature
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Should generate:
+ * Description of the integrative WorkManager module and factory owner generation.
+ * This generator creates the centralized infrastructure required to configure
+ * a custom Dagger-aware `WorkerFactory` for a specific scope.
+ *
+ * Should generate the following components:
+ *
+ * 1. Worker Integrative Module:
+ * Contributes a module to the `<Scope>` that manages the collection and provisioning
+ * of Worker factories. First, it declares a `@Multibinds` map annotated with
+ * `@SealantWorkerAssistedFactoryMap` to aggregate all individual Worker factories safely,
+ * even if the map is empty. Second, it provides the central `SealantWorkerFactory`,
+ * injecting the populated map of providers so it can delegate Worker instantiation
+ * to the correct assisted factory at runtime.
  * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
@@ -63,7 +75,15 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *         ): SealantWorkerFactory = SealantWorkerFactory(wafProviderMap)
  *     }
  * }
+ * ```
  *
+ * 2. Worker Factory Owner Interface:
+ * Contributes the `SealantWorkerFactory_Owner` interface to the target `<Scope>`.
+ * This ensures the owning component (typically the Application component) officially
+ * exposes the configured `SealantWorkerFactory`. This is crucial because the Android
+ * Application class needs to retrieve this factory to initialize the `WorkManager`
+ * configuration during app startup.
+ * ```
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantWorkerFactory_Owner : SealantWorkerFactory.Owner
  * ```
@@ -78,12 +98,11 @@ public class WorkIntegrationSymbolProcessor(
         resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .map { annotated ->
+            .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.Work)
                     .map { annotated to it }
             }
-            .flatten()
             .distinctBy { it.second }
             .onEach { _ -> /* Verification if you need */ }
             .forEach { symbol ->

@@ -110,12 +110,11 @@ public class ViewModelIntegrationSymbolProcessor(
         resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .map { annotated ->
+            .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.ViewModel)
                     .map { annotated to it }
             }
-            .flatten()
             .distinctBy { it.second }
             .onEach { _ -> /* Verification if you need */ }
             .forEach { symbol ->

@@ -48,6 +48,8 @@ import kotlin.reflect.KClass
  *
  */
 public object ClassNames {
+    public val javaClazz: ClassName = Class::class.asClassName()
+    public val kotlinClazz: ClassName = KClass::class.asClassName()
     public val optIn: ClassName = ClassName("kotlin", "OptIn")
 
     public val singleIn: ClassName = ClassName(
@@ -63,7 +65,6 @@ public object ClassNames {
     public val sealantIntegration: ClassName = ClassName(
         "dev.steinerok.sealant.core", "SealantIntegration"
     )
-
     public val experimentalSealantApi: ClassName = ClassName(
         "dev.steinerok.sealant.core", "ExperimentalSealantApi"
     )
@@ -71,42 +72,44 @@ public object ClassNames {
         "dev.steinerok.sealant.core.internal", "InternalSealantApi"
     )
 
-    public val named: ClassName = Named::class.asClassName()
     public val inject: ClassName = Inject::class.asClassName()
+    public val named: ClassName = Named::class.asClassName()
+    public val provider: ClassName = Provider::class.asClassName()
     public val qualifier: ClassName = Qualifier::class.asClassName()
 
-    public val module: ClassName = Module::class.asClassName()
     public val binds: ClassName = Binds::class.asClassName()
     public val bindsInstance: ClassName = BindsInstance::class.asClassName()
+    public val module: ClassName = Module::class.asClassName()
+    public val provides: ClassName = Provides::class.asClassName()
+    public val assisted: ClassName = Assisted::class.asClassName()
+    public val assistedFactory: ClassName = AssistedFactory::class.asClassName()
+    public val assistedInject: ClassName = AssistedInject::class.asClassName()
     public val classKey: ClassName = ClassKey::class.asClassName()
-    public val stringKey: ClassName = StringKey::class.asClassName()
     public val intoMap: ClassName = IntoMap::class.asClassName()
     public val intoSet: ClassName = IntoSet::class.asClassName()
     public val multibinds: ClassName = Multibinds::class.asClassName()
-    public val subcomponentFactory: ClassName = MergeSubcomponent.Factory::class.asClassName()
-    public val componentFactory: ClassName = MergeComponent.Factory::class.asClassName()
-    public val provides: ClassName = Provides::class.asClassName()
-    public val daggerFactory: ClassName = Factory::class.asClassName()
-    public val provider: ClassName = Provider::class.asClassName()
+    public val stringKey: ClassName = StringKey::class.asClassName()
     public val membersInjector: ClassName = MembersInjector::class.asClassName()
-    public val assisted: ClassName = Assisted::class.asClassName()
-    public val assistedInject: ClassName = AssistedInject::class.asClassName()
-    public val assistedFactory: ClassName = AssistedFactory::class.asClassName()
+    public val daggerFactory: ClassName = Factory::class.asClassName()
 
-    public val contributesTo: ClassName = ContributesTo::class.asClassName()
     public val contributesBinding: ClassName = ContributesBinding::class.asClassName()
     public val contributesMultibinding: ClassName = ContributesMultibinding::class.asClassName()
-    public val mergeComponent: ClassName = MergeComponent::class.asClassName()
-    public val mergeSubcomponent: ClassName = MergeSubcomponent::class.asClassName()
     public val contributesSubcomponent: ClassName = ContributesSubcomponent::class.asClassName()
+    public val contributesSubcomponentFactory: ClassName =
+        ContributesSubcomponent.Factory::class.asClassName()
+    public val contributesTo: ClassName = ContributesTo::class.asClassName()
+    public val mergeComponent: ClassName = MergeComponent::class.asClassName()
+    public val mergeComponentFactory: ClassName = MergeComponent.Factory::class.asClassName()
+    public val mergeSubcomponent: ClassName = MergeSubcomponent::class.asClassName()
+    public val mergeSubcomponentFactory: ClassName = MergeSubcomponent.Factory::class.asClassName()
 
-    public val javaClazz: ClassName = Class::class.asClassName()
-    public val kotlinClazz: ClassName = KClass::class.asClassName()
-
-    public val androidBundle: ClassName = ClassName("android.os", "Bundle")
     public val androidContext: ClassName = ClassName("android.content", "Context")
+    public val androidApplication: ClassName = ClassName("android.app", "Application")
+    public val androidBundle: ClassName = ClassName("android.os", "Bundle")
     public val androidActivity: ClassName = ClassName("android.app", "Activity")
-    public val androidBroadcastReceiver: ClassName = ClassName("android.content", "BroadcastReceiver")
+    public val androidBroadcastReceiver: ClassName = ClassName(
+        "android.content", "BroadcastReceiver"
+    )
     public val androidContentProvider: ClassName = ClassName("android.content", "ContentProvider")
     public val androidService: ClassName = ClassName("android.app", "Service")
     public val androidxFragment: ClassName = ClassName("androidx.fragment.app", "Fragment")

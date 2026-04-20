@@ -21,6 +21,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.SET
+import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.WildcardTypeName
 import dev.steinerok.sealant.compiler.ClassNames
 
@@ -71,7 +72,7 @@ internal val ClassNames.sealantViewModelSubcomponentFactory
 
 internal val ClassNames.sealantViewModelSubcomponentFactoryMap
     get() = MAP.parameterizedBy(
-        ClassNames.string,
+        STRING,
         sealantViewModelSubcomponentFactory
     )
 

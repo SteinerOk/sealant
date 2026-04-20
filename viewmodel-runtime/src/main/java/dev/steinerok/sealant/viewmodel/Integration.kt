@@ -53,6 +53,10 @@ public interface SealantViewModelSubcomponent {
         @InternalSealantApi
         @get:SealantViewModelSupport.SubcomponentMap
         public val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<Factory>>
+
+        /**  */
+        @InternalSealantApi
+        public val vmFactoryCreator: SealantViewModelFactoryCreator
     }
 }
 

@@ -50,12 +50,27 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Should generate:
+ * Description of the injection component generation for the target class.
+ * This generator creates a set of classes for seamless integration with Dagger/Anvil,
+ * providing dependency injection and registering the injector in the graph.
+ *
+ * Should generate the following components:
+ *
+ * 1. Main Injector Class:
+ * Implements the base `SealantInjector` interface and encapsulates the injection logic.
+ * A `MembersInjector` is passed into the constructor, which performs the actual field injection
+ * into the target class.
  * ```
  * public class <Type>_SealantInjector @Inject constructor(
  *     public override val injector: MembersInjector<<Type>>
  * ) : SealantInjector<<Type>>
+ * ```
  *
+ * 2. Binds Module for the injectors map:
+ * Adds the generated injector to the Dagger Multibinding Map.
+ * This allows a factory or dispatcher to find the required injector at runtime
+ * using the activity key (`ActivityKey`), mapping the `<Type>` to its `AnvilInjector` implementation.
+ * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Type>_SealantInjector_BindsModule {

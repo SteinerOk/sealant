@@ -45,7 +45,19 @@ import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Should generate:
+ * Description of the ViewModel Subcomponent and factory infrastructure generation.
+ * This generator creates the core Dagger architecture required to instantiate ViewModels
+ * that depend on a `SavedStateHandle`. It achieves this by generating a dedicated
+ * subcomponent for the ViewModel scope, allowing the state handle to be bound at runtime.
+ *
+ * Should generate the following components:
+ *
+ * 1. ViewModel Subcomponent & Factory:
+ * Creates an Anvil `@MergeSubcomponent` tied to `ViewModel_<Scope>`. This acts as an
+ * isolated dependency graph specifically for ViewModels. The `@Subcomponent.Factory`
+ * forces the provision of a `SavedStateHandle` via `@BindsInstance`, making it available
+ * to any ViewModel created within this subcomponent. The `Parent` interface allows the
+ * parent component to explicitly expose the subcomponent's dependencies.
  * ```
  * @SingleIn(SealantViewModelScope::class)
  * @MergeSubcomponent(scope = ViewModel_<Scope>::class)
@@ -59,7 +71,13 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @ContributesTo(scope = <Scope>::class)
  *     public interface Parent : SealantViewModelSubcomponent.Parent
  * }
+ * ```
  *
+ * 2. Main Scope Integrative Module:
+ * Contributes to the parent `<Scope>`. It includes the newly generated subcomponent
+ * and declares foundational multibinding maps: one for registering supported ViewModel
+ * classes (`KeySet`), and another for aggregating subcomponent factories.
+ * ```
  * @Module(subcomponents = [<Scope>_SealantViewModelSubcomponent::class])
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantViewModelSubcomponent_IntegrativeModule {
@@ -72,7 +90,13 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @SealantViewModelSupport.SubcomponentMap
  *     public fun bindVmSubcomponentFactoryMap(): Map<String, SealantViewModelSubcomponent.Factory>
  * }
+ * ```
  *
+ * 3. Subcomponent Factory Binds Module:
+ * Contributes to the parent `<Scope>`. It explicitly binds the generated Subcomponent
+ * Factory into the multibinding map defined above, using the scope's package string as a key.
+ * This allows the parent factory creator to locate and use this specific subcomponent factory.
+ * ```
  * @Module
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantViewModelSubcomponent_BindsModule {
@@ -83,10 +107,20 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @SealantViewModelSupport.SubcomponentMap
  *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
  * }
+ * ```
  *
+ * 4. ViewModel Factory Creator Owner:
+ * Exposes the `SealantViewModelFactoryCreator` to the parent `<Scope>`, ensuring the
+ * system can access the mechanism required to spin up the ViewModel subcomponents.
+ * ```
  * @ContributesTo(scope = <Scope>::class)
  * public interface <Scope>_SealantViewModelFactoryCreatorOwner : SealantViewModelFactoryCreator.Owner
+ * ```
  *
+ * 5. ViewModel Scope Integrative Module:
+ * Contributes to the `ViewModel_<Scope>`. It defines the Multibinding map where all
+ * the actual `ViewModel` instances will be bound (using the `@SealantViewModelMap` qualifier).
+ * ```
  * @Module
  * @ContributesTo(scope = ViewModel_<Scope>::class)
  * public interface <Scope>_ViewModelFactories_IntegrativeModule {
@@ -95,7 +129,13 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  *     @SealantViewModelMap
  *     public fun bindWmMap(): Map<Class<out ViewModel>, ViewModel>
  * }
+ * ```
  *
+ * 6. ViewModel Factories Owner:
+ * Contributes to the `ViewModel_<Scope>`. This ensures the subcomponent officially exposes
+ * the fully constructed `ViewModelFactories`, allowing the Android framework to finally
+ * retrieve the instantiated ViewModels.
+ * ```
  * @ContributesTo(scope = ViewModel_<Scope>::class)
  * public interface <Scope>_ViewModelFactoriesOwner : ViewModelFactoriesOwner
  * ```

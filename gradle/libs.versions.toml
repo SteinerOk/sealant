@@ -1,7 +1,7 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
-kotlin = "2.3.20"
-ksp = "2.3.6"
+kotlin = "2.3.21"
+ksp = "2.3.7"
 androidPlugin = "9.2.0"
 versionsPlugin = "0.54.0"
 spotlessPlugin = "8.4.0"
@@ -27,6 +27,7 @@ timber = "5.0.1"
 # Dependency Injection
 dagger = "2.59.2"
 anvilKsp = "0.5.3"
+metro = "1.0.0-RC3"
 # Tools
 kotlinpoet = "2.3.0"
 auto-service = "1.1.1"
@@ -46,6 +47,7 @@ androidx-test-espresso = "3.7.0"
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 anvilKsp-gradlePlugin = { group = "dev.zacsweers.anvil", name = "gradle-plugin", version.ref = "anvilKsp" }
+metro-gradlePlugin = { group = "dev.zacsweers.metro", name = "dev.zacsweers.metro.gradle.plugin", version.ref = "metro" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidPlugin" }
 android-gradleApiPlugin = { group = "com.android.tools.build", name = "gradle-api", version.ref = "androidPlugin" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotlessPlugin" }
@@ -89,6 +91,11 @@ anvilKsp-annotations-optional = { module = "dev.zacsweers.anvil:annotations-opti
 anvilKsp-compiler = { module = "dev.zacsweers.anvil:compiler", version.ref = "anvilKsp" }
 anvilKsp-compiler-api = { module = "dev.zacsweers.anvil:compiler-api", version.ref = "anvilKsp" }
 anvilKsp-compiler-utils = { module = "dev.zacsweers.anvil:compiler-utils", version.ref = "anvilKsp" }
+metro-interop-dagger = { module = "dev.zacsweers.metro:interop-dagger", version.ref = "metro" }
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
+metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }
+metrox-viewmodel = { module = "dev.zacsweers.metro:metrox-viewmodel", version.ref = "metro" }
+metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-compose", version.ref = "metro" }
 # Tools
 ksp = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
@@ -121,6 +128,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 anvilKsp = { id = "dev.zacsweers.anvil", version.ref = "anvilKsp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
 android-library = { id = "com.android.library", version.ref = "androidPlugin" }
 android-builtInKotlin = { id = "com.android.built-in-kotlin", version.ref = "androidPlugin" }

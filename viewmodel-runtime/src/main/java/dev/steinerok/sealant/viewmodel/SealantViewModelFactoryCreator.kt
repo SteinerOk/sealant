@@ -30,10 +30,7 @@ import javax.inject.Provider
 /**
  * The same functionality as InternalFactoryFactory inside DefaultViewModelFactories in Hilt
  */
-public class SealantViewModelFactoryCreator
-@InternalSealantApi
-@Inject
-internal constructor(
+public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject constructor(
     private val application: Application,
     @param:SealantViewModelSupport.KeySet private val vmKeySet: @JvmSuppressWildcards Set<Class<out ViewModel>>,
     @param:SealantViewModelSupport.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,

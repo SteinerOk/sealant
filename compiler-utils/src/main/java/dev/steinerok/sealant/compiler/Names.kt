@@ -97,7 +97,7 @@ public object ClassNames {
     public val androidxFragmentFactory: ClassName =
         ClassName("androidx.fragment.app", "FragmentFactory")
     public val androidxViewModel: ClassName = ClassName("androidx.lifecycle", "ViewModel")
-    public val ssHandle: ClassName = ClassName("androidx.lifecycle", "SavedStateHandle")
+    public val androidxSsHandle: ClassName = ClassName("androidx.lifecycle", "SavedStateHandle")
     public val androidxListenableWorker: ClassName = ClassName("androidx.work", "ListenableWorker")
 }
 

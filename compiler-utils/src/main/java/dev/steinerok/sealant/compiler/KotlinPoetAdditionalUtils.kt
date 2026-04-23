@@ -37,7 +37,7 @@ public fun TypeSpec.Builder.addContributesToAnnotation(
 /**
  *
  */
-public fun TypeSpec.Builder.addPrimaryConstructorAndProperties(
+public fun TypeSpec.Builder.addPrimaryInjectConstructor(
     vararg propertySpecs: PropertySpec,
 ): TypeSpec.Builder {
     val properties = propertySpecs.map { pSpec ->

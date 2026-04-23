@@ -15,7 +15,7 @@ article [Extending Anvil for Fun and Profit] and Rick Busarow library [Tangle]
 
 ## Setup
 
-declare dependencies in `libs.versions.toml`:
+Declare dependencies in `libs.versions.toml`:
 
 ```toml
 [versions]

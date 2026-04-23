@@ -71,9 +71,12 @@ internal val ClassNames.sealantViewModelSubcomponentFactory
     get() = sealantViewModelSubcomponent.nestedClass("Factory")
 
 internal val ClassNames.sealantViewModelSubcomponentFactoryMap
+    get() = MAP.parameterizedBy(STRING, sealantViewModelSubcomponentFactory)
+
+internal val ClassNames.sealantViewModelSubcomponentFactoryProviderMap
     get() = MAP.parameterizedBy(
         STRING,
-        sealantViewModelSubcomponentFactory
+        ClassNames.provider.parameterizedBy(ClassNames.sealantViewModelSubcomponentFactory)
     )
 
 internal val ClassNames.sealantViewModelSubcomponentParent

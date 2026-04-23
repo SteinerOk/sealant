@@ -66,9 +66,9 @@ include(":version-catalog")
 val sampleDirectory = file("sample")
 if (sampleDirectory.exists() && sampleDirectory.isDirectory) {
     include(
-        ":sample:core-di",
-        ":sample:feature-entrance",
-        ":sample:feature-home",
-        ":sample:app"
+        ":sample:anvil:core-di",
+        ":sample:anvil:feature-entrance",
+        ":sample:anvil:feature-home",
+        ":sample:anvil:app"
     )
 }

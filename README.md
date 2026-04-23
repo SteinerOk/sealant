@@ -3,11 +3,11 @@
 [![GitHub release](https://img.shields.io/maven-central/v/io.github.steinerok.sealant/di-common)](https://search.maven.org/search?q=g:io.github.steinerok.sealant)
 [![License](https://img.shields.io/badge/license-apache2.0-blue?style=flat-square.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Sealant creates [Dagger] bindings and integrations for Android classes using the [Anvil].
+Sealant creates [Dagger] bindings and integrations for Android classes using the [Anvil-KSP].
 This is meant to be an alternative to [Hilt], for those who'd prefer to enjoy the faster
-compilation and better flexibility of Anvil.
+compilation and better flexibility of Anvil-KSP.
 
-Since Sealant is an extension upon Anvil, its code generation will be applied to **Kotlin** files
+Since Sealant is an extension upon Anvil-KSP, its code generation will be applied to **Kotlin** files
 only.
 
 Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers
@@ -15,29 +15,55 @@ article [Extending Anvil for Fun and Profit] and Rick Busarow library [Tangle]
 
 ## Setup
 
+declare dependencies in `libs.versions.toml`:
+
+```toml
+[versions]
+ksp = "2.3.7"
+sealant = "0.6.0-alpha16"
+
+[libraries]
+sealant-diCommon = { module = "io.github.steinerok.sealant:di-common", version.ref = "sealant" }
+sealant-core-runtime = { module = "io.github.steinerok.sealant:sealant-core-runtime", version.ref = "sealant" }
+sealant-core-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-core-compiler-ksp", version.ref = "sealant" }
+sealant-appcomponent-runtime = { module = "io.github.steinerok.sealant:sealant-appcomponent-runtime", version.ref = "sealant" }
+sealant-appcomponent-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-appcomponent-compiler-ksp", version.ref = "sealant" }
+sealant-fragment-runtime = { module = "io.github.steinerok.sealant:sealant-fragment-runtime", version.ref = "sealant" }
+sealant-fragment-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-fragment-compiler-ksp", version.ref = "sealant" }
+sealant-viewmodel-runtime = { module = "io.github.steinerok.sealant:sealant-viewmodel-runtime", version.ref = "sealant" }
+sealant-viewmodel-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-viewmodel-compiler-ksp", version.ref = "sealant" }
+sealant-work-runtime = { module = "io.github.steinerok.sealant:sealant-work-runtime", version.ref = "sealant" }
+sealant-work-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-work-compiler-ksp", version.ref = "sealant" }
+
+[plugins]
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+```
+
 Add dependencies:
 
 ```gradle
-dependencies {
-    def sealant_version = "0.6.0-alpha13"
+plugins {
+    alias(libs.plugins.ksp)
+}
 
+dependencies {
     // Common
-    implementation "io.github.steinerok.sealant:di-common:${sealant_version}"
+    implementation(libs.sealant.diCommon)
     // Core
-    implementation "io.github.steinerok.sealant:sealant-core-api:${sealant_version}"
-    anvil "io.github.steinerok.sealant:sealant-core-codegen:${sealant_version}"
+    implementation(libs.sealant.core.runtime)
+    ksp (libs.sealant.core.compiler.ksp)
     // Appcomponent
-    implementation "io.github.steinerok.sealant:sealant-appcomponent-api:${sealant_version}"
-    anvil "io.github.steinerok.sealant:sealant-appcomponent-codegen:${sealant_version}"
+    implementation (libs.sealant.appcomponent.runtime)
+    ksp(libs.sealant.appcomponent.compiler.ksp)
     // Fragment
-    implementation "io.github.steinerok.sealant:sealant-fragment-api:${sealant_version}"
-    anvil "io.github.steinerok.sealant:sealant-fragment-codegen:${sealant_version}"
+    implementation (libs.sealant.fragment.runtime)
+    ksp(libs.sealant.fragment.compiler.ksp)
     // ViewModel
-    implementation "io.github.steinerok.sealant:sealant-viewmodel-api:${sealant_version}"
-    anvil "io.github.steinerok.sealant:sealant-viewmodel-codegen:${sealant_version}"
+    implementation (libs.sealant.viewmodel.runtime)
+    ksp(libs.sealant.viewmodel.compiler.ksp)
     // WorkManager
-    implementation "io.github.steinerok.sealant:sealant-work-api:${sealant_version}"
-    anvil "io.github.steinerok.sealant:sealant-work-codegen:${sealant_version}"
+    implementation (libs.sealant.work.runtime)
+    ksp(libs.sealant.work.compiler.ksp)
 }
 ```
 
@@ -101,7 +127,7 @@ class MainViewModel @Inject constructor(
 
 ```kotlin
 @ContributesWorker(AppScope::class)
-class MainWorker2 @AssistedInject constructor(
+class MainWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
     /* Your dependencies */
@@ -129,7 +155,7 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-[Anvil]: https://github.com/square/anvil
+[Anvil-KSP]: https://github.com/zacsweers/anvil
 
 [Dagger]: https://dagger.dev
 

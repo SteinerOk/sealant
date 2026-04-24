@@ -25,10 +25,13 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -53,36 +56,6 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * dependency injection for Android's WorkManager via Assisted Injection.
  * It allows Workers to receive both system-provided parameters and
  * Dagger-provided dependencies.
- *
- * Should generate the following components:
- *
- * 1. Worker Assisted Factory:
- * Generates an interface annotated with `@AssistedFactory`. This acts as a factory
- * template, instructing Dagger to generate an implementation that combines the runtime
- * parameters (`Context`, `WorkerParameters`) with dependencies from the graph to
- * create the target `<Worker>`.
- * ```
- * @AssistedFactory
- * public interface <Worker>_AssistedFactory : WorkerAssistedFactory<<Worker>>
- * ```
- *
- * 2. Binds Module for the Factory Map:
- * Contributes a binding module to the target `<Scope>`. It binds the generated
- * assisted factory into a Dagger Multibinding Map using a string key corresponding
- * to the Worker's fully qualified class name. A custom Dagger-aware `WorkerFactory`
- * will use this map (identified by `@SealantWorkerAssistedFactoryMap`) to locate
- * the correct factory and instantiate the Worker at runtime.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Worker>_BindsModule {
- *     @Binds
- *     @IntoMap
- *     @StringKey("pkg.<Worker>")
- *     @SealantWorkerAssistedFactoryMap
- *     public fun bind(instance: <Worker>_AssistedFactory): WorkerAssistedFactory<out ListenableWorker>
- * }
- * ```
  */
 public class WorkerCreationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -91,109 +64,165 @@ public class WorkerCreationSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesWorker)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .filter { annotated ->
                 annotated
                     .scope()
                     .hasSealantFeatureForScope(SealantFeature.Work)
             }
-            .onEach { clazz ->
-                if (!clazz.implements(ClassNames.androidxListenableWorker)) {
-                    logger.error(
-                        message = "The annotation `@SealantWorker` can only be applied " +
-                                "to classes which extend ${ClassNames.androidxListenableWorker}",
-                        symbol = clazz
-                    )
-                }
-
-                val constructor = clazz.getConstructors()
-                    .singleOrNull { it.isAnnotationPresent(ClassNames.assistedInject) }
-                if (clazz.getConstructors().toList().size != 1 || constructor == null) {
-                    logger.error(
-                        message = "Worker class, witch is annotated `@SealantWorker`, must have " +
-                                "only one constructor and it must be annotated `@AssistedInject`",
-                        symbol = clazz
-                    )
-                    return@onEach
-                }
-
-                val appContextParam = constructor.parameters.firstOrNull { param ->
-                    param.isAnnotationPresent(ClassNames.assisted) &&
-                            param.type.resolve().toClassName() == ClassNames.androidContext &&
-                            param.name?.asString() == "appContext"
-                }
-                val paramsParam = constructor.parameters.firstOrNull { param ->
-                    param.isAnnotationPresent(ClassNames.assisted) &&
-                            param.type.resolve().toClassName() == ClassNames.workerParameters &&
-                            param.name?.asString() == "workerParams"
-                }
-                val assistedParamsCount = constructor.parameters.count { param ->
-                    param.isAnnotationPresent(ClassNames.assisted)
-                }
-                if (appContextParam == null || paramsParam == null || assistedParamsCount != 2) {
-                    logger.error(
-                        message = "Your constructor witch annotated `@AssistedInject` must have" +
-                                "only 2 parameters annotated `@Assisted`: " +
-                                "`appContext` with type ${ClassNames.androidContext} and " +
-                                "`workerParams` with type ${ClassNames.workerParameters}",
-                        symbol = clazz
-                    )
-                }
-            }
             .forEach { symbol ->
-                generateByProcessor(symbol).writeTo(
+                generateByProcessor(symbol)?.writeTo(
                     codeGenerator = codeGenerator,
-                    aggregating = false,
+                    aggregating = false, // Isolating mode
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
-    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec {
-        val packageName = clazz.packageName.asString()
-        val fileName = clazz.simpleName.asString() + "_Creation"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val origClassName = clazz.toClassName()
-            val origShortName = clazz.simpleName.asString()
-            val scopeClassName = clazz.scope().toClassName()
-            //
-            val afNameStr = "${origShortName}_AssistedFactory"
-            val afClassName = ClassName(packageName, afNameStr)
-            val afInterface = InterfaceSpec(afClassName) {
-                addAnnotation(AnnotationSpec(ClassNames.assistedFactory))
-                addSuperinterface(ClassNames.workerAssistedFactory.parameterizedBy(origClassName))
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(afInterface)
-            //
-            val bmNameStr = "${origShortName}_BindsModule"
-            val bmClassName = ClassName(packageName, bmNameStr)
-            val bmInterface = InterfaceSpec(bmClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(scopeClassName)
-                addFunction(
-                    FunSpec("bind") {
-                        addAnnotation(ClassNames.binds)
-                        addAnnotation(ClassNames.intoMap)
-                        addAnnotation(
-                            AnnotationSpec(ClassNames.stringKey) {
-                                addMember("%S", origClassName.reflectionName().replace("..", "."))
-                            }
-                        )
-                        addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
-                        addModifiers(KModifier.ABSTRACT)
-                        addParameter(ParameterSpec("instance", afClassName))
-                        returns(ClassNames.workerAssistedFactoryOutListenableWorker)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(bmInterface)
+    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec? {
+        if (!clazz.implements(ClassNames.androidxListenableWorker)) {
+            logger.error(
+                message = "The annotation `@SealantWorker` can only be applied " +
+                        "to classes which extend ${ClassNames.androidxListenableWorker}",
+                symbol = clazz
+            )
+            return null
         }
-        return content
+
+        val constructors = clazz.getConstructors().toList()
+        val assistedConstructor = constructors
+            .singleOrNull { it.isAnnotationPresent(ClassNames.assistedInject) }
+
+        if (constructors.size != 1 || assistedConstructor == null) {
+            logger.error(
+                message = "Worker class, which is annotated `@SealantWorker`, must have " +
+                        "exactly one constructor and it must be annotated with `@AssistedInject`",
+                symbol = clazz
+            )
+            return null
+        }
+
+        val appContextParam = assistedConstructor.parameters.firstOrNull { param ->
+            param.isAnnotationPresent(ClassNames.assisted) &&
+                    param.type.resolve().toClassName() == ClassNames.androidContext &&
+                    param.name?.asString() == "appContext"
+        }
+        val paramsParam = assistedConstructor.parameters.firstOrNull { param ->
+            param.isAnnotationPresent(ClassNames.assisted) &&
+                    param.type.resolve().toClassName() == ClassNames.workerParameters &&
+                    param.name?.asString() == "workerParams"
+        }
+        val assistedParamsCount = assistedConstructor.parameters.count { param ->
+            param.isAnnotationPresent(ClassNames.assisted)
+        }
+
+        if (appContextParam == null || paramsParam == null || assistedParamsCount != 2) {
+            logger.error(
+                message = "Your constructor which is annotated `@AssistedInject` must have " +
+                        "exactly 2 parameters annotated `@Assisted`: " +
+                        "`appContext` with type ${ClassNames.androidContext} and " +
+                        "`workerParams` with type ${ClassNames.workerParameters}",
+                symbol = clazz
+            )
+            return null
+        }
+
+        val origClassName = clazz.toClassName()
+        val scopeClassName = clazz.scope().toClassName()
+
+        val afNameStr = "${origClassName.simpleName}_AssistedFactory"
+        val afClassName = ClassName(origClassName.packageName, afNameStr)
+
+        val fileName = "${origClassName.simpleName}_Creation"
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(origClassName.packageName, fileName) {
+            // Генерируем Assisted Factory интерфейс
+            addType(buildAssistedFactory(origClassName, afClassName, fileNode))
+
+            // Генерируем Binds Module
+            addType(buildBindsModule(origClassName, afClassName, scopeClassName, fileNode))
+        }
+    }
+
+    /**
+     * Generates the Worker Assisted Factory.
+     * * Generates an interface annotated with `@AssistedFactory`. This acts as a factory
+     * template, instructing Dagger to generate an implementation that combines the runtime
+     * parameters (`Context`, `WorkerParameters`) with dependencies from the graph to
+     * create the target `<Worker>`.
+     * * Output example:
+     * ```kotlin
+     * @AssistedFactory
+     * public interface <Worker>_AssistedFactory : WorkerAssistedFactory<<Worker>>
+     * ```
+     */
+    private fun buildAssistedFactory(
+        origClassName: ClassName,
+        afClassName: ClassName,
+        fileNode: KSFile
+    ): TypeSpec {
+        return InterfaceSpec(afClassName) {
+            addAnnotation(AnnotationSpec(ClassNames.assistedFactory))
+            addSuperinterface(ClassNames.workerAssistedFactory.parameterizedBy(origClassName))
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the Binds Module for the Factory Map.
+     * * Contributes a binding module to the target `<Scope>`. It binds the generated
+     * assisted factory into a Dagger Multibinding Map using a string key corresponding
+     * to the Worker's fully qualified class name. A custom Dagger-aware `WorkerFactory`
+     * will use this map (identified by `@SealantWorkerAssistedFactoryMap`) to locate
+     * the correct factory and instantiate the Worker at runtime.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Worker>_BindsModule {
+     *     @Binds
+     *     @IntoMap
+     *     @StringKey("pkg.<Worker>")
+     *     @SealantWorkerAssistedFactoryMap
+     *     public fun bind(instance: <Worker>_AssistedFactory): WorkerAssistedFactory<out ListenableWorker>
+     * }
+     * ```
+     */
+    private fun buildBindsModule(
+        origClassName: ClassName,
+        afClassName: ClassName,
+        scopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val bmNameStr = "${origClassName.simpleName}_BindsModule"
+        val bmClassName = ClassName(origClassName.packageName, bmNameStr)
+
+        return InterfaceSpec(bmClassName) {
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec("bind") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(AnnotationSpec(ClassNames.stringKey) {
+                    addMember("%S", origClassName.reflectionName().replace("..", "."))
+                })
+                addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("instance", afClassName))
+                returns(ClassNames.workerAssistedFactoryOutListenableWorker)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -202,7 +231,6 @@ public class WorkerCreationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return WorkerCreationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

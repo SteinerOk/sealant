@@ -24,9 +24,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -49,44 +52,6 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  * Description of the integrative WorkManager module and factory owner generation.
  * This generator creates the centralized infrastructure required to configure
  * a custom Dagger-aware `WorkerFactory` for a specific scope.
- *
- * Should generate the following components:
- *
- * 1. Worker Integrative Module:
- * Contributes a module to the `<Scope>` that manages the collection and provisioning
- * of Worker factories. First, it declares a `@Multibinds` map annotated with
- * `@SealantWorkerAssistedFactoryMap` to aggregate all individual Worker factories safely,
- * even if the map is empty. Second, it provides the central `SealantWorkerFactory`,
- * injecting the populated map of providers so it can delegate Worker instantiation
- * to the correct assisted factory at runtime.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public abstract class <Scope>_SealantWork_IntegrativeModule {
- *
- *     @Multibinds
- *     @SealantWorkerAssistedFactoryMap
- *     public abstract fun bindWafMap(): Map<String, WorkerAssistedFactory<out ListenableWorker>>
- *
- *     public companion object {
- *         @Provides
- *         public fun provideWorkerFactory(
- *             @SealantWorkerAssistedFactoryMap wafProviderMap: Map<String, @JvmSuppressWildcards Provider<WorkerAssistedFactory<out ListenableWorker>>>
- *         ): SealantWorkerFactory = SealantWorkerFactory(wafProviderMap)
- *     }
- * }
- * ```
- *
- * 2. Worker Factory Owner Interface:
- * Contributes the `SealantWorkerFactory_Owner` interface to the target `<Scope>`.
- * This ensures the owning component (typically the Application component) officially
- * exposes the configured `SealantWorkerFactory`. This is crucial because the Android
- * Application class needs to retrieve this factory to initialize the `WorkManager`
- * configuration during app startup.
- * ```
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantWorkerFactory_Owner : SealantWorkerFactory.Owner
- * ```
  */
 public class WorkIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -95,88 +60,147 @@ public class WorkIntegrationSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.Work)
                     .map { annotated to it }
             }
             .distinctBy { it.second }
-            .onEach { _ -> /* Verification if you need */ }
-            .forEach { symbol ->
-                generateByProcessor(symbol.first, symbol.second).writeTo(
+            .forEach { (clazz, scope) ->
+                generateByProcessor(clazz, scope).writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
     private fun generateByProcessor(
         clazz: KSClassDeclaration,
         scope: KSClassDeclaration,
     ): FileSpec {
-        val packageName = integrationPkg
         val scopeClassName = scope.toClassName()
         val scopeClassNameStr = scopeClassName.generateSimpleNameString()
+
         val fileName = "${scopeClassNameStr}_${featureName}_Integration"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(integrationPkg, fileName) {
+            // Генерируем Integrative Module только если нет родительского scope с такой фичей
             if (scope.parentScopeWithSealantFeature(SealantFeature.Work) == null) {
-                //
-                val wimNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
-                val wimClassName = ClassName(packageName, wimNameStr)
-                val wimClass = ClassSpec(wimClassName) {
-                    addModifiers(KModifier.ABSTRACT)
-                    addAnnotation(ClassNames.module)
-                    addContributesToAnnotation(scopeClassName)
-                    addFunction(
-                        FunSpec(name = "bindWafMap") {
-                            addAnnotation(ClassNames.multibinds)
+                addType(buildIntegrativeModule(scopeClassName, scopeClassNameStr, fileNode))
+            }
+
+            // Генерируем Worker Factory Owner Interface
+            addType(buildWorkerFactoryOwner(scopeClassName, scopeClassNameStr, fileNode))
+        }
+    }
+
+    /**
+     * Generates the Worker Integrative Module.
+     * * Contributes a module to the `<Scope>` that manages the collection and provisioning
+     * of Worker factories. First, it declares a `@Multibinds` map annotated with
+     * `@SealantWorkerAssistedFactoryMap` to aggregate all individual Worker factories safely,
+     * even if the map is empty. Second, it provides the central `SealantWorkerFactory`,
+     * injecting the populated map of providers so it can delegate Worker instantiation
+     * to the correct assisted factory at runtime.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public abstract class <Scope>_SealantWork_IntegrativeModule {
+     *
+     *     @Multibinds
+     *     @SealantWorkerAssistedFactoryMap
+     *     public abstract fun bindWafMap(): Map<String, WorkerAssistedFactory<out ListenableWorker>>
+     *
+     *     public companion object {
+     *         @Provides
+     *         public fun provideWorkerFactory(
+     *             @SealantWorkerAssistedFactoryMap wafProviderMap: Map<String, @JvmSuppressWildcards Provider<WorkerAssistedFactory<out ListenableWorker>>>
+     *         ): SealantWorkerFactory = SealantWorkerFactory(wafProviderMap)
+     *     }
+     * }
+     * ```
+     */
+    private fun buildIntegrativeModule(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile
+    ): TypeSpec {
+        val wimNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
+        val wimClassName = ClassName(integrationPkg, wimNameStr)
+
+        return ClassSpec(wimClassName) {
+            addModifiers(KModifier.ABSTRACT)
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec(name = "bindWafMap") {
+                addAnnotation(ClassNames.multibinds)
+                addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.workerAssistedFactoryMap)
+            })
+
+            val companion = CompanionObjectSpec {
+                addFunction(FunSpec(name = "provideWorkerFactory") {
+                    addAnnotation(ClassNames.provides)
+                    addParameter(
+                        ParameterSpec(
+                            name = "wafProviderMap",
+                            type = ClassNames.workerAssistedFactoryProviderMap
+                        ) {
                             addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
-                            addModifiers(KModifier.ABSTRACT)
-                            returns(ClassNames.workerAssistedFactoryMap)
                         }
                     )
-                    val companion = CompanionObjectSpec {
-                        addFunction(
-                            FunSpec(name = "provideWorkerFactory") {
-                                addAnnotation(ClassNames.provides)
-                                addParameter(
-                                    ParameterSpec(
-                                        name = "wafProviderMap",
-                                        type = ClassNames.workerAssistedFactoryProviderMap
-                                    ) {
-                                        addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
-                                    }
-                                )
-                                returns(ClassNames.sealantWorkerFactory)
-                                addStatement(
-                                    "return·%T(wafProviderMap)",
-                                    ClassNames.sealantWorkerFactory
-                                )
-                            }
-                        )
-                    }
-                    addType(companion)
-                    addOriginatingKSFile(clazz.requireContainingFile())
-                }
-                addType(wimClass)
+                    returns(ClassNames.sealantWorkerFactory)
+                    addStatement(
+                        "return %T(wafProviderMap)",
+                        ClassNames.sealantWorkerFactory
+                    )
+                })
             }
-            //
-            val wfoNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantWorkerFactoryOwner.generateSimpleNameString()}"
-            val wfoClassName = ClassName(packageName, wfoNameStr)
-            val wfoInterface = InterfaceSpec(wfoClassName) {
-                addSuperinterface(ClassNames.sealantWorkerFactoryOwner)
-                addContributesToAnnotation(scopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(wfoInterface)
+            addType(companion)
+
+            addOriginatingKSFile(fileNode)
         }
-        return content
+    }
+
+    /**
+     * Generates the Worker Factory Owner Interface.
+     * * Contributes the `SealantWorkerFactory_Owner` interface to the target `<Scope>`.
+     * This ensures the owning component (typically the Application component) officially
+     * exposes the configured `SealantWorkerFactory`. This is crucial because the Android
+     * Application class needs to retrieve this factory to initialize the `WorkManager`
+     * configuration during app startup.
+     * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantWorkerFactory_Owner : SealantWorkerFactory.Owner
+     * ```
+     */
+    private fun buildWorkerFactoryOwner(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val wfoSnStr = ClassNames.sealantWorkerFactoryOwner.generateSimpleNameString()
+        val wfoClassName = ClassName(integrationPkg, "${scopeClassNameStr}_$wfoSnStr")
+
+        return InterfaceSpec(wfoClassName) {
+            addSuperinterface(ClassNames.sealantWorkerFactoryOwner)
+            addContributesToAnnotation(scopeClassName)
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -185,7 +209,6 @@ public class WorkIntegrationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return WorkIntegrationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

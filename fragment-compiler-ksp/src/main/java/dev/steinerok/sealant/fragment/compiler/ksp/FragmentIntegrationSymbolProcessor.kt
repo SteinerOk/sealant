@@ -24,9 +24,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -46,68 +49,9 @@ import dev.steinerok.sealant.compiler.ksp.parentScopeWithSealantFeature
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Should generate:
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public abstract class <Scope>_sealantFragment_IntegrativeModule {
- *
- *     @Multibinds
- *     public abstract fun bindFragmentMap(): Map<Class<out Fragment>, Fragment>
- *
- *     public companion object {
- *         @Provides
- *         public fun provideFragmentFactory(
- *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
- *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
- *     }
- * }
- *
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantFragmentFactoryOwner : SealantFragmentFactory.Owner
- * ```
- */
-/**
  * Description of the Fragment factory infrastructure generation.
  * This generator creates the necessary multibinding and factory setup
  * to support constructor injection for Fragments within a specific Dagger/Anvil scope.
- *
- * Should generate the following components:
- *
- * 1. Fragment Integrative Module:
- * Contributes a module to the `<Scope>` that serves two primary purposes:
- * First, it declares a `@Multibinds` map for Fragments, ensuring the Dagger
- * graph compiles successfully even if no specific Fragments have been bound yet.
- * Second, it provides a custom `SealantFragmentFactory` using the aggregated
- * map of Fragment providers. This factory is responsible for instantiating
- * Fragments with their required dependencies injected into their constructors.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public abstract class <Scope>_sealantFragment_IntegrativeModule {
- *
- *     @Multibinds
- *     public abstract fun bindFragmentMap(): Map<Class<out Fragment>, Fragment>
- *
- *     public companion object {
- *         @Provides
- *         public fun provideFragmentFactory(
- *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
- *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
- *     }
- * }
- * ```
- *
- * 2. Fragment Factory Owner Interface:
- * Contributes the `SealantFragmentFactoryOwner` interface to the target `<Scope>`.
- * This ensures that the component owning this scope (e.g., an Activity or
- * Application component) officially exposes the `SealantFragmentFactory`.
- * This allows the Android framework (via the `FragmentManager`) to retrieve and
- * use the custom factory at runtime for Fragment creation.
- * ```
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantFragmentFactoryOwner : SealantFragmentFactory.Owner
- * ```
  */
 public class FragmentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -116,85 +60,140 @@ public class FragmentIntegrationSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.Fragment)
                     .map { annotated to it }
             }
             .distinctBy { it.second }
-            .onEach { _ -> /* Verification if you need */ }
-            .forEach { symbol ->
-                generateByProcessor(symbol.first, symbol.second).writeTo(
+            .forEach { (clazz, scope) ->
+                generateByProcessor(clazz, scope).writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
     private fun generateByProcessor(
         clazz: KSClassDeclaration,
-        scope: KSClassDeclaration
+        scope: KSClassDeclaration,
     ): FileSpec {
-        val packageName = integrationPkg
         val scopeClassName = scope.toClassName()
         val scopeClassNameStr = scopeClassName.generateSimpleNameString()
+
         val fileName = "${scopeClassNameStr}_${featureName}_Integration"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(integrationPkg, fileName) {
+            // Генерируем Integrative Module только если нет родительского scope с такой фичей
             if (scope.parentScopeWithSealantFeature(SealantFeature.Fragment) == null) {
-                //
-                val imNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
-                val imClassName = ClassName(packageName, imNameStr)
-                val imClass = ClassSpec(imClassName) {
-                    addModifiers(KModifier.ABSTRACT)
-                    addAnnotation(ClassNames.module)
-                    addContributesToAnnotation(scopeClassName)
-                    addFunction(
-                        FunSpec("bindFragmentMap") {
-                            addAnnotation(ClassNames.multibinds)
-                            addModifiers(KModifier.ABSTRACT)
-                            returns(ClassNames.fragmentMap)
-                        }
-                    )
-                    val companion = CompanionObjectSpec {
-                        addFunction(
-                            FunSpec("provideFragmentFactory") {
-                                addAnnotation(ClassNames.provides)
-                                addParameter(
-                                    ParameterSpec(
-                                        "fragmentProviderMap",
-                                        ClassNames.fragmentProviderMap
-                                    )
-                                )
-                                returns(ClassNames.sealantFragmentFactory)
-                                addStatement(
-                                    "return·%T(fragmentProviderMap)",
-                                    ClassNames.sealantFragmentFactory
-                                )
-                            }
-                        )
-                    }
-                    addType(companion)
-                    addOriginatingKSFile(clazz.requireContainingFile())
-                }
-                addType(imClass)
+                addType(buildIntegrativeModule(scopeClassName, scopeClassNameStr, fileNode))
             }
-            //
-            val ffoNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantFragmentFactoryOwner.generateSimpleNameString()}"
-            val ffoClassName = ClassName(packageName, ffoNameStr)
-            val ffoInterface = InterfaceSpec(ffoClassName) {
-                addSuperinterface(ClassNames.sealantFragmentFactoryOwner)
-                addContributesToAnnotation(scopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(ffoInterface)
+
+            // Генерируем Fragment Factory Owner Interface
+            addType(buildFragmentFactoryOwner(scopeClassName, scopeClassNameStr, fileNode))
         }
-        return content
+    }
+
+    /**
+     * Generates the Fragment Integrative Module.
+     * * Contributes a module to the `<Scope>` that serves two primary purposes:
+     * First, it declares a `@Multibinds` map for Fragments, ensuring the Dagger
+     * graph compiles successfully even if no specific Fragments have been bound yet.
+     * Second, it provides a custom `SealantFragmentFactory` using the aggregated
+     * map of Fragment providers. This factory is responsible for instantiating
+     * Fragments with their required dependencies injected into their constructors.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public abstract class <Scope>_sealantFragment_IntegrativeModule {
+     *
+     *     @Multibinds
+     *     public abstract fun bindFragmentMap(): Map<Class<out Fragment>, Fragment>
+     *
+     *     public companion object {
+     *         @Provides
+     *         public fun provideFragmentFactory(
+     *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
+     *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
+     *     }
+     * }
+     * ```
+     */
+    private fun buildIntegrativeModule(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val imNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
+        val imClassName = ClassName(integrationPkg, imNameStr)
+
+        return ClassSpec(imClassName) {
+            addModifiers(KModifier.ABSTRACT)
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec("bindFragmentMap") {
+                addAnnotation(ClassNames.multibinds)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.fragmentMap)
+            })
+
+            val companion = CompanionObjectSpec {
+                addFunction(FunSpec("provideFragmentFactory") {
+                    addAnnotation(ClassNames.provides)
+                    addParameter(
+                        ParameterSpec("fragmentProviderMap", ClassNames.fragmentProviderMap)
+                    )
+                    returns(ClassNames.sealantFragmentFactory)
+                    addStatement(
+                        "return %T(fragmentProviderMap)",
+                        ClassNames.sealantFragmentFactory
+                    )
+                })
+            }
+            addType(companion)
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the Fragment Factory Owner Interface.
+     * * Contributes the `SealantFragmentFactoryOwner` interface to the target `<Scope>`.
+     * This ensures that the component owning this scope (e.g., an Activity or
+     * Application component) officially exposes the `SealantFragmentFactory`.
+     * This allows the Android framework (via the `FragmentManager`) to retrieve and
+     * use the custom factory at runtime for Fragment creation.
+     * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantFragmentFactoryOwner : SealantFragmentFactory.Owner
+     * ```
+     */
+    private fun buildFragmentFactoryOwner(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val ffoSnStr = ClassNames.sealantFragmentFactoryOwner.generateSimpleNameString()
+        val ffoClassName = ClassName(integrationPkg, "${scopeClassNameStr}_$ffoSnStr")
+
+        return InterfaceSpec(ffoClassName) {
+            addSuperinterface(ClassNames.sealantFragmentFactoryOwner)
+            addContributesToAnnotation(scopeClassName)
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -203,7 +202,6 @@ public class FragmentIntegrationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return FragmentIntegrationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

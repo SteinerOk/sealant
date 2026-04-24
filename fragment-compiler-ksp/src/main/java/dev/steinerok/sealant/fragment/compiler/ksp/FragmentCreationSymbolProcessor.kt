@@ -24,10 +24,13 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -53,25 +56,6 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * specific Fragment into a Dagger Multibinding Map via Anvil. This is typically
  * used in architectures that rely on a custom `FragmentFactory` to inject
  * dependencies directly into Fragment constructors.
- *
- * Should generate the following component:
- *
- * 1. Fragment Binds Module:
- * Contributes a binding module to the target `<Scope>`. By combining `@Binds`,
- * `@IntoMap`, and the custom `@FragmentKey`, it instructs Dagger to map the
- * specific Fragment `<Type>` to its base `Fragment` class within a Multibinding Map.
- * This allows the dependency graph to locate and instantiate the correct Fragment
- * at runtime based on its class type.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Type>_BindsModule {
- *     @Binds
- *     @IntoMap
- *     @FragmentKey(<Type>::class)
- *     public fun bind(instance: <Type>): Fragment
- * }
- * ```
  */
 public class FragmentCreationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -80,77 +64,104 @@ public class FragmentCreationSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesFragment)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .filter { annotated ->
                 annotated
                     .scope()
                     .hasSealantFeatureForScope(SealantFeature.Fragment)
             }
-            .onEach { clazz ->
-                /* Verification if you need */
-                if (!clazz.implements(ClassNames.androidxFragment)) {
-                    logger.error(
-                        message = "The annotation `@ContributesFragment` can only be applied " +
-                                "to classes which extend ${ClassNames.androidxFragment}",
-                        symbol = clazz
-                    )
-                }
-            }
             .forEach { symbol ->
-                generateByProcessor(symbol).writeTo(
+                generateByProcessor(symbol)?.writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
-    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec {
-        val packageName = clazz.packageName.asString()
-        val fileName = clazz.simpleName.asString() + "_Creation"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val origClassName = clazz.toClassName()
-            val origShortName = clazz.simpleName.asString()
-            val scopeClassName = clazz.scope().toClassName()
-            //
-            val bmNameStr = "${origShortName}_BindsModule"
-            val bmClassName = ClassName(packageName, bmNameStr)
-            val bmInterface = InterfaceSpec(bmClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(scopeClassName) {
-                    val replaces = clazz
-                        .requireAnnotation(ClassNames.contributesFragment)
-                        .argumentOfTypeAtOrNull<List<KSType>>("replaces")
-                        ?.mapNotNull { (it.declaration as? KSClassDeclaration)?.toClassName() }
-                        .orEmpty()
-                    if (replaces.isNotEmpty()) {
-                        val replacesStr = replaces
-                            .joinToString(prefix = "[", postfix = "]") { "%T::class" }
-                        addMember("replaces·=·$replacesStr", *replaces.toTypedArray())
-                    }
-                }
-                addFunction(
-                    FunSpec("bind") {
-                        addAnnotation(ClassNames.binds)
-                        addAnnotation(ClassNames.intoMap)
-                        addAnnotation(
-                            AnnotationSpec(ClassNames.fragmentKey) {
-                                addMember("%T::class", origClassName)
-                            }
-                        )
-                        addModifiers(KModifier.ABSTRACT)
-                        addParameter(ParameterSpec("instance", origClassName))
-                        returns(ClassNames.androidxFragment)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(bmInterface)
+    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec? {
+        if (!clazz.implements(ClassNames.androidxFragment)) {
+            logger.error(
+                message = "The annotation `@ContributesFragment` can only be applied " +
+                        "to classes which extend ${ClassNames.androidxFragment}",
+                symbol = clazz
+            )
+            return null
         }
-        return content
+
+        val origClassName = clazz.toClassName()
+        val scopeClassName = clazz.scope().toClassName()
+
+        val fileName = "${origClassName.simpleName}_Creation"
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(origClassName.packageName, fileName) {
+            addType(buildFragmentBindsModule(origClassName, scopeClassName, clazz, fileNode))
+        }
+    }
+
+    /**
+     * Generates the Fragment Binds Module.
+     * * Contributes a binding module to the target `<Scope>`. By combining `@Binds`,
+     * `@IntoMap`, and the custom `@FragmentKey`, it instructs Dagger to map the
+     * specific Fragment `<Type>` to its base `Fragment` class within a Multibinding Map.
+     * This allows the dependency graph to locate and instantiate the correct Fragment
+     * at runtime based on its class type.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Type>_BindsModule {
+     *     @Binds
+     *     @IntoMap
+     *     @FragmentKey(<Type>::class)
+     *     public fun bind(instance: <Type>): Fragment
+     * }
+     * ```
+     */
+    private fun buildFragmentBindsModule(
+        origClassName: ClassName,
+        scopeClassName: ClassName,
+        clazz: KSClassDeclaration,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val bmNameStr = "${origClassName.simpleName}_BindsModule"
+        val bmClassName = ClassName(origClassName.packageName, bmNameStr)
+
+        return InterfaceSpec(bmClassName) {
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName) {
+                val replaces = clazz
+                    .requireAnnotation(ClassNames.contributesFragment)
+                    .argumentOfTypeAtOrNull<List<KSType>>("replaces")
+                    ?.mapNotNull { (it.declaration as? KSClassDeclaration)?.toClassName() }
+                    .orEmpty()
+                if (replaces.isNotEmpty()) {
+                    val replacesStr = replaces
+                        .joinToString(prefix = "[", postfix = "]") { "%T::class" }
+                    addMember("replaces = $replacesStr", *replaces.toTypedArray())
+                }
+            }
+
+            addFunction(FunSpec("bind") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(AnnotationSpec(ClassNames.fragmentKey) {
+                    addMember("%T::class", origClassName)
+                })
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("instance", origClassName))
+                returns(ClassNames.androidxFragment)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -159,7 +170,6 @@ public class FragmentCreationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return FragmentCreationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

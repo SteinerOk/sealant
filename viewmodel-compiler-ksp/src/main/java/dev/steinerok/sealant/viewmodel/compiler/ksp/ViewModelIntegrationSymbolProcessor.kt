@@ -24,12 +24,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.MAP
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -54,364 +54,394 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  * This generator creates the core Dagger architecture required to instantiate ViewModels
  * that depend on a `SavedStateHandle`. It achieves this by generating a dedicated
  * subcomponent for the ViewModel scope, allowing the state handle to be bound at runtime.
- *
- * Should generate the following components:
- *
- * 1. ViewModel Subcomponent & Factory:
- * Creates an Anvil `@MergeSubcomponent` tied to `ViewModel_<Scope>`. This acts as an
- * isolated dependency graph specifically for ViewModels. The `@Subcomponent.Factory`
- * forces the provision of a `SavedStateHandle` via `@BindsInstance`, making it available
- * to any ViewModel created within this subcomponent. The `Parent` interface allows the
- * parent component to explicitly expose the subcomponent's dependencies.
- * ```
- * @SingleIn(SealantViewModelScope::class)
- * @MergeSubcomponent(scope = ViewModel_<Scope>::class)
- * public interface <Scope>_SealantViewModelSubcomponent : SealantViewModelSubcomponent {
- *
- *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in Metro
- *     @Subcomponent.Factory
- *     public interface Factory : SealantViewModelSubcomponent.Factory {
- *         public override fun create(@BindsInstance ssHandle: SavedStateHandle): <Scope>_SealantViewModelSubcomponent
- *     }
- *
- *     @ContributesTo(scope = <Scope>::class)
- *     public interface Parent : SealantViewModelSubcomponent.Parent
- * }
- * ```
- *
- * 2. Main Scope Integrative Module:
- * Contributes to the parent `<Scope>`. It includes the newly generated subcomponent
- * and declares foundational multibinding maps: one for registering supported ViewModel
- * classes (`KeySet`), and another for aggregating subcomponent factories.
- * ```
- * @Module(subcomponents = [<Scope>_SealantViewModelSubcomponent::class])
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantViewModelSubcomponent_IntegrativeModule {
- *
- *     @Multibinds
- *     @SealantViewModelMap.KeySet
- *     public fun bindVmClassSet(): Set<Class<out ViewModel>>
- *
- *     @Multibinds
- *     @SealantViewModelSupport.SubcomponentMap
- *     public fun bindVmSubcomponentFactoryMap(): Map<String, SealantViewModelSubcomponent.Factory>
- * }
- * ```
- *
- * 3. Subcomponent Factory Binds Module:
- * Contributes to the parent `<Scope>`. It explicitly binds the generated Subcomponent
- * Factory into the multibinding map defined above, using the scope's package string as a key.
- * This allows the parent factory creator to locate and use this specific subcomponent factory.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantViewModelSubcomponent_BindsModule {
- *
- *     @Binds
- *     @IntoMap
- *     @StringKey("scope_pkg.<Scope>")
- *     @SealantViewModelSupport.SubcomponentMap
- *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
- * }
- * ```
- *
- * 4. ViewModel Factory Creator Owner:
- * Exposes the `SealantViewModelFactoryCreator` to the parent `<Scope>`, ensuring the
- * system can access the mechanism required to spin up the ViewModel subcomponents.
- * ```
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantViewModelFactoryCreatorOwner : SealantViewModelFactoryCreator.Owner
- * ```
- *
- * 5. ViewModel Scope Integrative Module:
- * Contributes to the `ViewModel_<Scope>`. It defines the Multibinding map where all
- * the actual `ViewModel` instances will be bound (using the `@SealantViewModelMap` qualifier).
- * ```
- * @Module
- * @ContributesTo(scope = ViewModel_<Scope>::class)
- * public interface <Scope>_ViewModelFactories_IntegrativeModule {
- *
- *     @Multibinds
- *     @SealantViewModelMap
- *     public fun bindWmMap(): Map<Class<out ViewModel>, ViewModel>
- * }
- * ```
- *
- * 6. ViewModel Factories Owner:
- * Contributes to the `ViewModel_<Scope>`. This ensures the subcomponent officially exposes
- * the fully constructed `ViewModelFactories`, allowing the Android framework to finally
- * retrieve the instantiated ViewModels.
- * ```
- * @ContributesTo(scope = ViewModel_<Scope>::class)
- * public interface <Scope>_ViewModelFactoriesOwner : ViewModelFactoriesOwner
- * ```
- *
- * 7. !!! Only in Metro !!! ViewModel Factory Creator Provides Module:
- * Contributes a singleton object module to the `<Scope>`. It provides the
- * `SealantViewModelFactoryCreator` as a scoped instance (`@SingleIn`). To construct
- * this creator, Metro injects the Android `Application` context alongside the
- * heavily aggregated Multibinding collections generated in previous steps: the set
- * of supported ViewModel classes (`vmKeySet`) and the map of subcomponent factories
- * (`vmSubcomponentFactoryMap`). This creator ultimately generates the
- * `ViewModelProvider.Factory` used by the UI layer.
- * ```
- * @ContributesTo(scope = AppScope::class)
- * @Module
- * public object AppScope_SealantViewModelSubcomponent_ProvidesModule {
- *     @Provides
- *     @SingleIn(AppScope::class)
- *     public fun provideCreator(
- *         application: Application,
- *         @SealantViewModelSupport.KeySet vmKeySet: Set<Class<out ViewModel>>,
- *         @SealantViewModelSupport.SubcomponentMap vmSubcomponentFactoryMap: Map<String, Provider<SealantViewModelSubcomponent.Factory>>
- *     ): SealantViewModelFactoryCreator = SealantViewModelFactoryCreator(application, vmKeySet, vmSubcomponentFactoryMap)
- * }
- * ```
  */
 public class ViewModelIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
-    options: Map<String, String>,
+    private val options: Map<String, String>,
     private val logger: KSPLogger,
 ) : SymbolProcessor {
 
-    private val options = SealantOptions.load(options, logger)
+    private val sealantOptions = SealantOptions.load(options, logger)
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.ViewModel)
                     .map { annotated to it }
             }
             .distinctBy { it.second }
-            .onEach { _ -> /* Verification if you need */ }
-            .forEach { symbol ->
-                generateByProcessor(symbol.first, symbol.second).writeTo(
+            .forEach { (clazz, scope) ->
+                generateByProcessor(clazz, scope).writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
     private fun generateByProcessor(
         clazz: KSClassDeclaration,
-        scope: KSClassDeclaration
+        scope: KSClassDeclaration,
     ): FileSpec {
-        val packageName = integrationPkg
         val scopeClassName = scope.toClassName()
         val scopeClassNameStr = scopeClassName.generateSimpleNameString()
+
+        val vmScopeClassName = buildVmScopeClassName(scopeClassName)
+
+        val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
+        val vmsNameStr = "${scopeClassNameStr}_$vmsSnStr"
+        val vmsClassName = ClassName(integrationPkg, vmsNameStr)
+        val mvmsNameStr = if (sealantOptions.useMetro) vmsNameStr else "Merged$vmsNameStr"
+        val mvmsClassName = ClassName(integrationPkg, mvmsNameStr)
+
+        val fileNode = clazz.requireContainingFile()
         val fileName = "${scopeClassNameStr}_${featureName}_Integration"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val vmScopeClassName = buildVmScopeClassName(scopeClassName)
-            //
-            val vmsNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantViewModelSubcomponent.simpleName}"
-            val vmsClassName = ClassName(packageName, vmsNameStr)
-            // Required via https://github.com/ZacSweers/anvil/blob/main/FORK.md#subcomponents
-            val mvmsNameStr = if (options.useMetro) vmsNameStr else "Merged$vmsNameStr"
-            val mvmsClassName = ClassName(packageName, mvmsNameStr)
-            val vmsInterface = InterfaceSpec(vmsClassName) {
-                addSuperinterface(ClassNames.sealantViewModelSubcomponent)
-                addAnnotation(
-                    AnnotationSpec(ClassNames.singleIn) {
-                        addMember("scope·=·%T::class", ClassNames.sealantViewModelScope)
-                    }
+
+        return SealantFileSpec(integrationPkg, fileName) {
+            addType(
+                buildViewModelSubcomponent(
+                    vmsClassName, scopeClassName, vmScopeClassName, fileNode
                 )
-                addAnnotation(
-                    AnnotationSpec(ClassNames.mergeSubcomponent) {
-                        addMember("scope·=·%T::class", vmScopeClassName)
-                    }
+            )
+            addType(
+                buildMainIntegrativeModule(
+                    scopeClassNameStr, scopeClassName, mvmsClassName, fileNode
                 )
-                addType(
-                    InterfaceSpec("Factory") {
-                        addSuperinterface(ClassNames.sealantViewModelSubcomponentFactory)
-                        if (options.useMetro) addContributesToAnnotation(scopeClassName)
-                        addAnnotation(ClassNames.mergeSubcomponentFactory)
-                        addFunction(
-                            FunSpec("create") {
-                                addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
-                                addParameter(
-                                    ParameterSpec("ssHandle", ClassNames.ssHandle) {
-                                        addAnnotation(ClassNames.bindsInstance)
-                                    }
-                                )
-                                returns(vmsClassName)
-                            }
-                        )
-                        addOriginatingKSFile(clazz.requireContainingFile())
-                    }
+            )
+            addType(
+                buildSubcomponentBindsModule(
+                    scopeClassNameStr, scopeClassName, mvmsClassName, fileNode
                 )
-                addType(
-                    InterfaceSpec("Parent") {
-                        addSuperinterface(ClassNames.sealantViewModelSubcomponentParent)
-                        addContributesToAnnotation(scopeClassName)
-                        addOriginatingKSFile(clazz.requireContainingFile())
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
+            )
+
+            if (sealantOptions.useMetro) {
+                addType(buildCreatorProvidesModule(scopeClassNameStr, scopeClassName, fileNode))
             }
-            addType(vmsInterface)
-            //
-            val imNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantViewModelSubcomponent.simpleName}_IntegrativeModule"
-            val imClassName = ClassName(packageName, imNameStr)
-            val imInterface = InterfaceSpec(imClassName) {
-                addAnnotation(
-                    AnnotationSpec(ClassNames.module) {
-                        addMember("subcomponents·=·[%T::class]", mvmsClassName)
-                    }
-                )
-                addContributesToAnnotation(scopeClassName)
-                addFunction(
-                    FunSpec("bindVmClassSet") {
-                        addAnnotation(ClassNames.multibinds)
-                        addAnnotation(ClassNames.sealantViewModelSupportKeySet)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.viewModelClassSet)
-                    }
-                )
-                addFunction(
-                    FunSpec("bindVmSubcomponentFactoryMap") {
-                        addAnnotation(ClassNames.multibinds)
-                        addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantViewModelSubcomponentFactoryMap)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(imInterface)
-            //
-            val bmNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantViewModelSubcomponent.simpleName}_BindsModule"
-            val bmClassName = ClassName(packageName, bmNameStr)
-            val bmInterface = InterfaceSpec(bmClassName) {
-                addContributesToAnnotation(scopeClassName)
-                addAnnotation(ClassNames.module)
-                addFunction(
-                    FunSpec("bind") {
-                        addAnnotation(ClassNames.binds)
-                        addAnnotation(ClassNames.intoMap)
-                        addAnnotation(
-                            AnnotationSpec(ClassNames.stringKey) {
-                                addMember("%S", scopeClassName.reflectionName().replace("..", "."))
-                            }
-                        )
-                        addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
-                        addModifiers(KModifier.ABSTRACT)
-                        addParameter(
-                            ParameterSpec(
-                                "instance",
-                                mvmsClassName.nestedClass("Factory")
-                            )
-                        )
-                        returns(ClassNames.sealantViewModelSubcomponentFactory)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(bmInterface)
-            //
-            if (options.useMetro) {
-                val pmNameStr =
-                    "${scopeClassNameStr}_${ClassNames.sealantViewModelSubcomponent.simpleName}_ProvidesModule"
-                val pmClassName = ClassName(packageName, pmNameStr)
-                val pmObject = ObjectSpec(pmClassName) {
-                    addContributesToAnnotation(scopeClassName)
-                    addAnnotation(ClassNames.module)
-                    addFunction(
-                        FunSpec("provideCreator") {
-                            addAnnotation(ClassNames.provides)
-                            addAnnotation(
-                                AnnotationSpec(ClassNames.singleIn) {
-                                    addMember("%T::class", scopeClassName)
-                                }
-                            )
-                            addParameter(
-                                ParameterSpec("application", ClassNames.androidApplication)
-                            )
-                            addParameter(
-                                ParameterSpec("vmKeySet", ClassNames.viewModelClassSet) {
-                                    addAnnotation(
-                                        ClassName(
-                                            "dev.steinerok.sealant.viewmodel",
-                                            "SealantViewModelSupport", "KeySet"
-                                        )
-                                    )
-                                }
-                            )
-                            addParameter(
-                                ParameterSpec(
-                                    "vmSubcomponentFactoryMap",
-                                    MAP.parameterizedBy(
-                                        STRING,
-                                        ClassNames.provider.parameterizedBy(
-                                            ClassNames.sealantViewModelSubcomponentFactory
-                                        )
-                                    )
-                                ) {
-                                    addAnnotation(
-                                        ClassName(
-                                            "dev.steinerok.sealant.viewmodel",
-                                            "SealantViewModelSupport", "SubcomponentMap"
-                                        )
-                                    )
-                                }
-                            )
-                            returns(ClassNames.sealantViewModelFactoryCreator)
-                            addStatement(
-                                "return %T(application, vmKeySet, vmSubcomponentFactoryMap)",
-                                ClassNames.sealantViewModelFactoryCreator
-                            )
-                        }
-                    )
-                    addOriginatingKSFile(clazz.requireContainingFile())
-                }
-                addType(pmObject)
-            }
-            //
-            val wmfcoNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantViewModelFactoryCreatorOwner.generateSimpleNameString()}"
-            val wmfcoClassName = ClassName(packageName, wmfcoNameStr)
-            val wmfcoInterface = InterfaceSpec(wmfcoClassName) {
-                addSuperinterface(ClassNames.sealantViewModelFactoryCreatorOwner)
-                addContributesToAnnotation(scopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(wmfcoInterface)
-            //
-            val vmfimNameStr = "${scopeClassNameStr}_ViewModelFactories_IntegrativeModule"
-            val vmfimClassName = ClassName(packageName, vmfimNameStr)
-            val vmfimInterface = InterfaceSpec(vmfimClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(vmScopeClassName)
-                addFunction(
-                    FunSpec("bindWmMap") {
-                        addAnnotation(ClassNames.multibinds)
-                        addAnnotation(ClassNames.sealantViewModelMap)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.viewModelMap)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(vmfimInterface)
-            //
-            val vmfoNameStr =
-                "${scopeClassNameStr}_${ClassNames.viewModelFactoriesOwner.simpleName}"
-            val vmfoClassName = ClassName(packageName, vmfoNameStr)
-            val vmfoInterface = InterfaceSpec(vmfoClassName) {
-                addSuperinterface(ClassNames.viewModelFactoriesOwner)
-                addContributesToAnnotation(vmScopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(vmfoInterface)
+
+            addType(buildCreatorOwnerInterface(scopeClassNameStr, scopeClassName, fileNode))
+            addType(buildVmScopeIntegrativeModule(scopeClassNameStr, vmScopeClassName, fileNode))
+            addType(buildVmFactoriesOwner(scopeClassNameStr, vmScopeClassName, fileNode))
         }
-        return content
+    }
+
+
+    /**
+     * Creates an Anvil `@MergeSubcomponent` tied to `ViewModel_<Scope>`. This acts as an
+     * isolated dependency graph specifically for ViewModels. The `@Subcomponent.Factory`
+     * forces the provision of a `SavedStateHandle` via `@BindsInstance`.
+     * * * Output example:
+     * ```kotlin
+     * @SingleIn(SealantViewModelScope::class)
+     * @MergeSubcomponent(scope = ViewModel_<Scope>::class)
+     * public interface <Scope>_SealantViewModelSubcomponent : SealantViewModelSubcomponent {
+     *
+     *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in Metro
+     *     @Subcomponent.Factory
+     *     public interface Factory : SealantViewModelSubcomponent.Factory {
+     *         public override fun create(@BindsInstance ssHandle: SavedStateHandle): <Scope>_SealantViewModelSubcomponent
+     *     }
+     *
+     *     @ContributesTo(scope = <Scope>::class)
+     *     public interface Parent : SealantViewModelSubcomponent.Parent
+     * }
+     * ```
+     */
+    private fun buildViewModelSubcomponent(
+        vmsClassName: ClassName,
+        scopeClassName: ClassName,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        return InterfaceSpec(vmsClassName) {
+            addSuperinterface(ClassNames.sealantViewModelSubcomponent)
+            addAnnotation(AnnotationSpec(ClassNames.singleIn) {
+                addMember("scope = %T::class", ClassNames.sealantViewModelScope)
+            })
+            addAnnotation(AnnotationSpec(ClassNames.mergeSubcomponent) {
+                addMember("scope = %T::class", vmScopeClassName)
+            })
+
+            addType(InterfaceSpec("Factory") {
+                addSuperinterface(ClassNames.sealantViewModelSubcomponentFactory)
+                if (sealantOptions.useMetro) addContributesToAnnotation(scopeClassName)
+                addAnnotation(ClassNames.mergeSubcomponentFactory)
+                addFunction(FunSpec("create") {
+                    addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
+                    addParameter(ParameterSpec("ssHandle", ClassNames.androidxSsHandle) {
+                        addAnnotation(ClassNames.bindsInstance)
+                    })
+                    returns(vmsClassName)
+                })
+
+                addOriginatingKSFile(fileNode)
+            })
+
+            addType(InterfaceSpec("Parent") {
+                addSuperinterface(ClassNames.sealantViewModelSubcomponentParent)
+                addContributesToAnnotation(scopeClassName)
+
+                addOriginatingKSFile(fileNode)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Contributes to the parent `<Scope>`. It includes the newly generated subcomponent
+     * and declares foundational multibinding maps: one for registering supported ViewModel
+     * classes (`KeySet`), and another for aggregating subcomponent factories.
+     * * * Output example:
+     * ```kotlin
+     * @Module(subcomponents = [<Scope>_SealantViewModelSubcomponent::class])
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantViewModelSubcomponent_IntegrativeModule {
+     *
+     *     @Multibinds
+     *     @SealantViewModelMap.KeySet
+     *     public fun bindVmClassSet(): Set<Class<out ViewModel>>
+     *
+     *     @Multibinds
+     *     @SealantViewModelSupport.SubcomponentMap
+     *     public fun bindVmSubcomponentFactoryMap(): Map<String, SealantViewModelSubcomponent.Factory>
+     * }
+     * ```
+     */
+    private fun buildMainIntegrativeModule(
+        scopeClassNameStr: String,
+        scopeClassName: ClassName,
+        mvmsClassName: ClassName,
+        fileNode: KSFile
+    ): TypeSpec {
+        val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
+        val bmNameStr = "${scopeClassNameStr}_${vmsSnStr}_IntegrativeModule"
+        val imClassName = ClassName(integrationPkg, bmNameStr)
+
+        return InterfaceSpec(imClassName) {
+            addContributesToAnnotation(scopeClassName)
+            addAnnotation(AnnotationSpec(ClassNames.module) {
+                addMember("subcomponents = [%T::class]", mvmsClassName)
+            })
+
+            addFunction(FunSpec("bindVmClassSet") {
+                addAnnotation(ClassNames.multibinds)
+                addAnnotation(ClassNames.sealantViewModelSupportKeySet)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.viewModelClassSet)
+            })
+
+            addFunction(FunSpec("bindVmSubcomponentFactoryMap") {
+                addAnnotation(ClassNames.multibinds)
+                addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.sealantViewModelSubcomponentFactoryMap)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Contributes to the parent `<Scope>`. It explicitly binds the generated Subcomponent
+     * Factory into the multibinding map defined above, using the scope's package string as a key.
+     * * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantViewModelSubcomponent_BindsModule {
+     *
+     *     @Binds
+     *     @IntoMap
+     *     @StringKey("scope_pkg.<Scope>")
+     *     @SealantViewModelSupport.SubcomponentMap
+     *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
+     * }
+     * ```
+     */
+    private fun buildSubcomponentBindsModule(
+        scopeClassNameStr: String,
+        scopeClassName: ClassName,
+        mvmsClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
+        val bmNameStr = "${scopeClassNameStr}_${vmsSnStr}_BindsModule"
+        val bmClassName = ClassName(integrationPkg, bmNameStr)
+
+        return InterfaceSpec(bmClassName) {
+            addContributesToAnnotation(scopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("bind") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(AnnotationSpec(ClassNames.stringKey) {
+                    addMember("%S", scopeClassName.reflectionName().replace("..", "."))
+                })
+                addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("instance", mvmsClassName.nestedClass("Factory")))
+                returns(ClassNames.sealantViewModelSubcomponentFactory)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * !!! Only in Metro !!!
+     * Contributes a singleton object module to the `<Scope>`. It provides the
+     * `SealantViewModelFactoryCreator` as a scoped instance (`@SingleIn`).
+     * * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = AppScope::class)
+     * @Module
+     * public object AppScope_SealantViewModelSubcomponent_ProvidesModule {
+     *     @Provides
+     *     @SingleIn(AppScope::class)
+     *     public fun provideCreator(
+     *         application: Application,
+     *         @SealantViewModelSupport.KeySet vmKeySet: Set<Class<out ViewModel>>,
+     *         @SealantViewModelSupport.SubcomponentMap vmSubcomponentFactoryMap: Map<String, Provider<SealantViewModelSubcomponent.Factory>>
+     *     ): SealantViewModelFactoryCreator = SealantViewModelFactoryCreator(application, vmKeySet, vmSubcomponentFactoryMap)
+     * }
+     * ```
+     */
+    private fun buildCreatorProvidesModule(
+        scopeClassNameStr: String,
+        scopeClassName: ClassName,
+        fileNode: KSFile
+    ): TypeSpec {
+        val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
+        val pmSnStr = "${scopeClassNameStr}_${vmsSnStr}_ProvidesModule"
+        val pmClassName = ClassName(integrationPkg, pmSnStr)
+
+        return ObjectSpec(pmClassName) {
+            addContributesToAnnotation(scopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("provideCreator") {
+                addAnnotation(ClassNames.provides)
+                addAnnotation(AnnotationSpec(ClassNames.singleIn) {
+                    addMember("%T::class", scopeClassName)
+                })
+                addParameter(ParameterSpec("application", ClassNames.androidApplication))
+                addParameter(ParameterSpec("vmKeySet", ClassNames.viewModelClassSet) {
+                    addAnnotation(ClassNames.sealantViewModelSupportKeySet)
+                })
+                addParameter(
+                    ParameterSpec(
+                        "vmSubcomponentFactoryMap",
+                        ClassNames.sealantViewModelSubcomponentFactoryProviderMap
+                    ) {
+                        addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
+                    }
+                )
+                returns(ClassNames.sealantViewModelFactoryCreator)
+                addStatement(
+                    "return %T(application, vmKeySet, vmSubcomponentFactoryMap)",
+                    ClassNames.sealantViewModelFactoryCreator
+                )
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Exposes the `SealantViewModelFactoryCreator` to the parent `<Scope>`, ensuring the
+     * system can access the mechanism required to spin up the ViewModel subcomponents.
+     * * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantViewModelFactoryCreatorOwner : SealantViewModelFactoryCreator.Owner
+     * ```
+     */
+    private fun buildCreatorOwnerInterface(
+        scopeClassNameStr: String,
+        scopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val wmfcoSnStr = ClassNames.sealantViewModelFactoryCreatorOwner.generateSimpleNameString()
+        val wmfcoClassName = ClassName(integrationPkg, "${scopeClassNameStr}_$wmfcoSnStr")
+
+        return InterfaceSpec(wmfcoClassName) {
+            addSuperinterface(ClassNames.sealantViewModelFactoryCreatorOwner)
+            addContributesToAnnotation(scopeClassName)
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Contributes to the `ViewModel_<Scope>`. It defines the Multibinding map where all
+     * the actual `ViewModel` instances will be bound (using the `@SealantViewModelMap` qualifier).
+     * * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * public interface <Scope>_ViewModelFactories_IntegrativeModule {
+     *
+     *     @Multibinds
+     *     @SealantViewModelMap
+     *     public fun bindWmMap(): Map<Class<out ViewModel>, ViewModel>
+     * }
+     * ```
+     */
+    private fun buildVmScopeIntegrativeModule(
+        scopeClassNameStr: String,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val vmfimNameStr = "${scopeClassNameStr}_ViewModelFactories_IntegrativeModule"
+        val vmfimClassName = ClassName(integrationPkg, vmfimNameStr)
+
+        return InterfaceSpec(vmfimClassName) {
+            addContributesToAnnotation(vmScopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("bindWmMap") {
+                addAnnotation(ClassNames.multibinds)
+                addAnnotation(ClassNames.sealantViewModelMap)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.viewModelMap)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Contributes to the `ViewModel_<Scope>`. This ensures the subcomponent officially exposes
+     * the fully constructed `ViewModelFactories`, allowing the Android framework to finally
+     * retrieve the instantiated ViewModels.
+     * * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * public interface <Scope>_ViewModelFactoriesOwner : ViewModelFactoriesOwner
+     * ```
+     */
+    private fun buildVmFactoriesOwner(
+        scopeClassNameStr: String,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val vmfoSnStr = ClassNames.viewModelFactoriesOwner.simpleName
+        val vmfoClassName = ClassName(integrationPkg, "${scopeClassNameStr}_${vmfoSnStr}")
+
+        return InterfaceSpec(vmfoClassName) {
+            addSuperinterface(ClassNames.viewModelFactoriesOwner)
+            addContributesToAnnotation(vmScopeClassName)
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -420,7 +450,6 @@ public class ViewModelIntegrationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return ViewModelIntegrationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

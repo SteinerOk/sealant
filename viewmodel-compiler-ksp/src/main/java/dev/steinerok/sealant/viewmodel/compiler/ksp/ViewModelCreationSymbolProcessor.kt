@@ -24,9 +24,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -52,44 +55,7 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * for ViewModels, allowing a custom `ViewModelProvider.Factory` to dynamically
  * instantiate them. The architectural approach closely mirrors Dagger Hilt's
  * internal code generation but is adapted for custom Anvil scopes.
- *
- * Should generate the following components:
- *
- * 1. ViewModel Key Set Module:
- * Contributes to the main `<Scope>` (conceptually similar to Hilt's
- * `ActivityRetainedComponent`). It provides the specific ViewModel's class
- * into a Dagger Set (`@SealantViewModelMap.KeySet`). This allows the dependency
- * graph to maintain a registry of all available ViewModels, which can be used
- * for graph validation or by the factory to verify support before instantiation.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public object <ViewModel>_KeyModule {
- *   @Provides
- *   @IntoSet
- *   @SealantViewModelMap.KeySet
- *   public fun provide<ViewModel>Key(): Class<out ViewModel> = <ViewModel>::class.java
- * }
- * ```
- *
- * 2. ViewModel Binds Module:
- * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. It binds
- * the concrete `<ViewModel>` instance to the base `ViewModel` type inside a
- * Multibinding Map. This map (`@SealantViewModelMap`) is then injected into
- * the custom factory to resolve and create the correct ViewModel instance at runtime.
- * ```
- * @Module
- * @ContributesTo(scope = ViewModel_<Scope>::class)
- * public interface <ViewModel>_BindsModule {
- *   @Binds
- *   @IntoMap
- *   @ViewModelKey(<ViewModel>::class)
- *   @SealantViewModelMap
- *   public fun bind(instance: <ViewModel>): ViewModel
- * }
- * ```
- *
- * Architecture Note (Hilt Comparison):
+ * * Architecture Note (Hilt Comparison):
  * This setup achieves the same dependency resolution as Hilt's `@HiltViewModel`
  * codegen. However, there are two key distinctions:
  * - Scope separation: Hilt splits these between `ViewModelComponent` (for the map)
@@ -97,8 +63,9 @@ import dev.steinerok.sealant.compiler.ksp.scope
  * - Key types: Hilt uses string-based keys (`@StringKey("pkg.$")`), whereas this
  * implementation utilizes direct class types (`Class<out ViewModel>`) for enhanced
  * type safety within the designated Sealant scopes.
+ *
  * Related with Hilt codegen:
- * ```
+ * ```java
  * public final class $_HiltModules {
  *   @Module
  *   @InstallIn(ViewModelComponent.class)
@@ -126,90 +93,145 @@ import dev.steinerok.sealant.compiler.ksp.scope
 public class ViewModelCreationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
     @Suppress("unused") private val options: Map<String, String>,
-    @Suppress("unused") private val logger: KSPLogger,
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesViewModel)
             .filterIsInstance<KSClassDeclaration>()
-            .filter { annotated ->
-                annotated
-                    .scope()
-                    .hasSealantFeatureForScope(SealantFeature.ViewModel)
-            }
-            .onEach { clazz ->
-                /* Verification if you need */
-                if (!clazz.implements(ClassNames.androidxViewModel)) {
-                    logger.error(
-                        message = "The annotation `@SealantViewModel` can only be applied " +
-                                "to classes which extend ${ClassNames.androidxViewModel}",
-                        symbol = clazz
-                    )
-                }
-            }
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
+            .filter { it.scope().hasSealantFeatureForScope(SealantFeature.ViewModel) }
             .forEach { symbol ->
-                generateByProcessor(symbol).writeTo(
+                generateByProcessor(symbol)?.writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
-    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec {
-        val packageName = clazz.packageName.asString()
-        val fileName = clazz.simpleName.asString() + "_Creation"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val origClassName = clazz.toClassName()
-            val origShortName = clazz.simpleName.asString()
-            val scopeClassName = clazz.scope().toClassName()
-            val vmScopeClassName = buildVmScopeClassName(scopeClassName)
-            //
-            val kmNameStr = "${origShortName}_KeyModule"
-            val kmClassName = ClassName(packageName, kmNameStr)
-            val kmObject = ObjectSpec(kmClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(scopeClassName)
-                addFunction(
-                    FunSpec("provide${origShortName}Key") {
-                        addAnnotation(ClassNames.provides)
-                        addAnnotation(ClassNames.intoSet)
-                        addAnnotation(ClassNames.sealantViewModelSupportKeySet)
-                        returns(ClassNames.javaClazzOutViewModel)
-                        addStatement("return·%T::class.java", origClassName)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(kmObject)
-            //
-            val bmNameStr = "${origShortName}_BindsModule"
-            val bmClassName = ClassName(packageName, bmNameStr)
-            val bmInterface = InterfaceSpec(bmClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(vmScopeClassName)
-                addFunction(
-                    FunSpec("bind") {
-                        addAnnotation(ClassNames.binds)
-                        addAnnotation(ClassNames.intoMap)
-                        addAnnotation(
-                            AnnotationSpec(ClassNames.viewModelKey) {
-                                addMember("%T::class", origClassName)
-                            }
-                        )
-                        addAnnotation(ClassNames.sealantViewModelMap)
-                        addModifiers(KModifier.ABSTRACT)
-                        addParameter(ParameterSpec("instance", origClassName))
-                        returns(ClassNames.androidxViewModel)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(bmInterface)
+    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec? {
+        if (!clazz.implements(ClassNames.androidxViewModel)) {
+            logger.error(
+                message = "The annotation `@SealantViewModel` can only be applied " +
+                        "to classes which extend ${ClassNames.androidxViewModel}",
+                symbol = clazz
+            )
+            return null
         }
-        return content
+
+        val origClassName = clazz.toClassName()
+        val origShortName = origClassName.simpleName
+
+        val scopeClassName = clazz.scope().toClassName()
+        val vmScopeClassName = buildVmScopeClassName(scopeClassName)
+
+        val fileName = "${origShortName}_Creation"
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(origClassName.packageName, fileName) {
+            // Генерируем ViewModel Key Set Module
+            addType(buildKeyModule(origClassName, origShortName, scopeClassName, fileNode))
+
+            // Генерируем ViewModel Binds Module
+            addType(buildBindsModule(origClassName, origShortName, vmScopeClassName, fileNode))
+        }
+    }
+
+    /**
+     * Generates the ViewModel Key Set Module.
+     * * Contributes to the main `<Scope>` (conceptually similar to Hilt's
+     * `ActivityRetainedComponent`). It provides the specific ViewModel's class
+     * into a Dagger Set (`@SealantViewModelMap.KeySet`). This allows the dependency
+     * graph to maintain a registry of all available ViewModels, which can be used
+     * for graph validation or by the factory to verify support before instantiation.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public object <ViewModel>_KeyModule {
+     *   @Provides
+     *   @IntoSet
+     *   @SealantViewModelMap.KeySet
+     *   public fun provide<ViewModel>Key(): Class<out ViewModel> = <ViewModel>::class.java
+     * }
+     * ```
+     */
+    private fun buildKeyModule(
+        origClassName: ClassName,
+        origShortName: String,
+        scopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val kmNameStr = "${origShortName}_KeyModule"
+        val kmClassName = ClassName(origClassName.packageName, kmNameStr)
+
+        return ObjectSpec(kmClassName) {
+            addContributesToAnnotation(scopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("provide${origShortName}Key") {
+                addAnnotation(ClassNames.provides)
+                addAnnotation(ClassNames.intoSet)
+                addAnnotation(ClassNames.sealantViewModelSupportKeySet)
+                returns(ClassNames.javaClazzOutViewModel)
+                addStatement("return %T::class.java", origClassName)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the ViewModel Binds Module.
+     * * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. It binds
+     * the concrete `<ViewModel>` instance to the base `ViewModel` type inside a
+     * Multibinding Map. This map (`@SealantViewModelMap`) is then injected into
+     * the custom factory to resolve and create the correct ViewModel instance at runtime.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * public interface <ViewModel>_BindsModule {
+     *   @Binds
+     *   @IntoMap
+     *   @ViewModelKey(<ViewModel>::class)
+     *   @SealantViewModelMap
+     *   public fun bind(instance: <ViewModel>): ViewModel
+     * }
+     * ```
+     */
+    private fun buildBindsModule(
+        origClassName: ClassName,
+        origShortName: String,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val bmNameStr = "${origShortName}_BindsModule"
+        val bmClassName = ClassName(origClassName.packageName, bmNameStr)
+
+        return InterfaceSpec(bmClassName) {
+            addContributesToAnnotation(vmScopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("bind") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(AnnotationSpec(ClassNames.viewModelKey) {
+                    addMember("%T::class", origClassName)
+                })
+                addAnnotation(ClassNames.sealantViewModelMap)
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("instance", origClassName))
+                returns(ClassNames.androidxViewModel)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -218,7 +240,6 @@ public class ViewModelCreationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return ViewModelCreationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

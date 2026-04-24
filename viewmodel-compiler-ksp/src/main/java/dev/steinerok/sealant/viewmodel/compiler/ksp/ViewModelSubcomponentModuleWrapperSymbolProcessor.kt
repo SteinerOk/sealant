@@ -24,8 +24,11 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -44,23 +47,8 @@ import dev.steinerok.sealant.compiler.ksp.scope
 /**
  * Description of the module wrapper generation for ViewModel scopes.
  * This generator creates an intermediary interface to safely include
- * an existing Dagger module into a specific Anvil ViewModel scope,
+ * an existing Dagger module in a specific Anvil ViewModel scope,
  * typically used when the original module cannot be directly annotated.
- *
- * Should generate the following component:
- *
- * 1. Module Wrapper Interface:
- * Acts as a structural bridge by utilizing Dagger's `includes` parameter within
- * the `@Module` annotation. It takes the target `<Module>` and contributes it
- * directly to the `ViewModel_<Scope>` via Anvil's `@ContributesTo`. This pattern
- * is highly useful for seamlessly integrating legacy Dagger modules, third-party
- * modules, or shared modules into the Anvil graph without needing to modify
- * their original source code.
- * ```
- * @Module(includes = [<Module>::class])
- * @ContributesTo(scope = ViewModel_<Scope>::class)
- * public interface <Module>_Wrapper
- * ```
  */
 public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -69,48 +57,75 @@ public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesToViewModel)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .filter { annotated ->
                 annotated
                     .scope()
                     .hasSealantFeatureForScope(SealantFeature.ViewModel)
             }
-            .onEach { _ ->  /* Verification if you need */ }
             .forEach { symbol ->
                 generateByProcessor(symbol).writeTo(
                     codeGenerator = codeGenerator,
-                    aggregating = false,
+                    aggregating = false, // Isolating mode
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
     private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec {
-        val packageName = clazz.packageName.asString()
-        val fileName = clazz.simpleName.asString() + "_Creation"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val origClassName = clazz.toClassName()
-            val origShortName = clazz.simpleName.asString()
-            val scopeClassName = clazz.scope().toClassName()
-            val vmScopeClassName = buildVmScopeClassName(scopeClassName)
-            //
-            val wNameStr = "${origShortName}_Wrapper"
-            val wClassName = ClassName(packageName, wNameStr)
-            val wInterface = InterfaceSpec(wClassName) {
-                addAnnotation(
-                    AnnotationSpec(ClassNames.module) {
-                        addMember("includes·=·[%T::class]", origClassName)
-                    }
-                )
-                addContributesToAnnotation(vmScopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(wInterface)
+        val origClassName = clazz.toClassName()
+        val origShortName = origClassName.simpleName
+
+        val scopeClassName = clazz.scope().toClassName()
+        val vmScopeClassName = buildVmScopeClassName(scopeClassName)
+
+        val fileName = "${origShortName}_Creation"
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(origClassName.packageName, fileName) {
+            // Генерируем Module Wrapper Interface
+            addType(buildModuleWrapper(origClassName, origShortName, vmScopeClassName, fileNode))
         }
-        return content
+    }
+
+    /**
+     * Generates the Module Wrapper Interface.
+     * * Acts as a structural bridge by utilizing Dagger's `includes` parameter within
+     * the `@Module` annotation. It takes the target `<Module>` and contributes it
+     * directly to the `ViewModel_<Scope>` via Anvil's `@ContributesTo`. This pattern
+     * is highly useful for seamlessly integrating legacy Dagger modules, third-party
+     * modules, or shared modules into the Anvil graph without needing to modify
+     * their original source code.
+     * * Output example:
+     * ```kotlin
+     * @Module(includes = [<Module>::class])
+     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * public interface <Module>_Wrapper
+     * ```
+     */
+    private fun buildModuleWrapper(
+        origClassName: ClassName,
+        origShortName: String,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val wNameStr = "${origShortName}_Wrapper"
+        val wClassName = ClassName(origClassName.packageName, wNameStr)
+
+        return InterfaceSpec(wClassName) {
+            addContributesToAnnotation(vmScopeClassName)
+            addAnnotation(AnnotationSpec(ClassNames.module) {
+                addMember("includes = [%T::class]", origClassName)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**

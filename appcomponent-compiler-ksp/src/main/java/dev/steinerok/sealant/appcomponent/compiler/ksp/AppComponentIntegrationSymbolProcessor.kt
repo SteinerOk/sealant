@@ -24,9 +24,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -45,41 +48,6 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
  * Description of the foundational Dagger multibinding module and interface generation.
  * This generator creates the core infrastructure needed to collect and manage
  * injectors for various Android components across the specified scope.
- *
- * Should generate the following components:
- *
- * 1. Integrative Multibinds Module:
- * Declares Dagger multibinding maps for standard Android components (Activities,
- * BroadcastReceivers, ContentProviders, and Services). Using `@Multibinds` ensures
- * that the Dagger graph compiles successfully even if some of these maps are currently
- * empty (i.e., no specific bindings have been contributed to them yet).
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantAppcomponent_IntegrativeModule {
- *     @Multibinds
- *     public fun activityInjectors(): SealantActivityInjectorsMap
- *
- *     @Multibinds
- *     public fun broadcastReceiverInjectors(): BroadcastReceiverInjectorsMap
- *
- *     @Multibinds
- *     public fun contentProviderInjectors(): SealantContentProviderInjectorsMap
- *
- *     @Multibinds
- *     public fun serviceInjectors(): SealantServiceInjectorsMap
- * }
- * ```
- *
- * 2. Injectors Owner Interface:
- * Contributes the `SealantInjectorsOwner` interface to the target `<Scope>`.
- * This ensures that the component owning this scope (typically the Application component)
- * exposes the necessary injector maps. This allows the dependency dispatcher to retrieve
- * and execute the correct injector for a given Android component at runtime.
- * ```
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Scope>_SealantInjectorsOwner : SealantInjectorsOwner
- * ```
  */
 public class AppComponentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -88,84 +56,135 @@ public class AppComponentIntegrationSymbolProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .flatMap { annotated ->
                 annotated
                     .findScopesForSealantFeatureIntegration(SealantFeature.AppComponent)
                     .map { annotated to it }
             }
             .distinctBy { it.second }
-            .onEach { _ -> /* Verification if you need */ }
-            .forEach { symbol ->
-                generateByProcessor(symbol.first, symbol.second).writeTo(
+            .forEach { (clazz, scope) ->
+                generateByProcessor(clazz, scope).writeTo(
                     codeGenerator = codeGenerator,
-                    aggregating = false,
+                    aggregating = false, // Isolating mode
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
     private fun generateByProcessor(
         clazz: KSClassDeclaration,
         scope: KSClassDeclaration,
     ): FileSpec {
-        val packageName = integrationPkg
         val scopeClassName = scope.toClassName()
         val scopeClassNameStr = scopeClassName.generateSimpleNameString()
+
         val fileName = "${scopeClassNameStr}_${featureName}_Integration"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            //
-            val imNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
-            val imClassName = ClassName(packageName, imNameStr)
-            val imInterface = InterfaceSpec(imClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(scopeClassName)
-                addFunction(
-                    FunSpec("activityInjectors") {
-                        addAnnotation(ClassNames.multibinds)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantActivityInjectorsMap)
-                    }
-                )
-                addFunction(
-                    FunSpec("broadcastReceiverInjectors") {
-                        addAnnotation(ClassNames.multibinds)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantBroadcastReceiverInjectorsMap)
-                    }
-                )
-                addFunction(
-                    FunSpec("contentProviderInjectors") {
-                        addAnnotation(ClassNames.multibinds)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantContentProviderInjectorsMap)
-                    }
-                )
-                addFunction(
-                    FunSpec("serviceInjectors") {
-                        addAnnotation(ClassNames.multibinds)
-                        addModifiers(KModifier.ABSTRACT)
-                        returns(ClassNames.sealantServiceInjectorsMap)
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(imInterface)
-            //
-            val ioNameStr =
-                "${scopeClassNameStr}_${ClassNames.sealantInjectorsOwner.generateSimpleNameString()}"
-            val ioClassName = ClassName(packageName, ioNameStr)
-            val ioInterface = InterfaceSpec(ioClassName) {
-                addSuperinterface(ClassNames.sealantInjectorsOwner)
-                addContributesToAnnotation(scopeClassName)
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(ioInterface)
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(integrationPkg, fileName) {
+            // Генерируем Integrative Multibinds Module
+            addType(buildIntegrativeModule(scopeClassName, scopeClassNameStr, fileNode))
+
+            // Генерируем Injectors Owner Interface
+            addType(buildInjectorsOwner(scopeClassName, scopeClassNameStr, fileNode))
         }
-        return content
+    }
+
+    /**
+     * Generates the Integrative Multibinds Module.
+     * * Declares Dagger multibinding maps for standard Android components (Activities,
+     * BroadcastReceivers, ContentProviders, and Services). Using `@Multibinds` ensures
+     * that the Dagger graph compiles successfully even if some of these maps are currently
+     * empty (i.e., no specific bindings have been contributed to them yet).
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantAppcomponent_IntegrativeModule {
+     *     @Multibinds
+     *     public fun activityInjectors(): SealantActivityInjectorsMap
+     *
+     *     @Multibinds
+     *     public fun broadcastReceiverInjectors(): BroadcastReceiverInjectorsMap
+     *
+     *     @Multibinds
+     *     public fun contentProviderInjectors(): SealantContentProviderInjectorsMap
+     *
+     *     @Multibinds
+     *     public fun serviceInjectors(): SealantServiceInjectorsMap
+     * }
+     * ```
+     */
+    private fun buildIntegrativeModule(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile
+    ): TypeSpec {
+        val imNameStr = "${scopeClassNameStr}_${featureName}_IntegrativeModule"
+        val imClassName = ClassName(integrationPkg, imNameStr)
+
+        return InterfaceSpec(imClassName) {
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec("activityInjectors") {
+                addAnnotation(ClassNames.multibinds)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.sealantActivityInjectorsMap)
+            })
+            addFunction(FunSpec("broadcastReceiverInjectors") {
+                addAnnotation(ClassNames.multibinds)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.sealantBroadcastReceiverInjectorsMap)
+            })
+            addFunction(FunSpec("contentProviderInjectors") {
+                addAnnotation(ClassNames.multibinds)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.sealantContentProviderInjectorsMap)
+            })
+            addFunction(FunSpec("serviceInjectors") {
+                addAnnotation(ClassNames.multibinds)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.sealantServiceInjectorsMap)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the Injectors Owner Interface.
+     * * Contributes the `SealantInjectorsOwner` interface to the target `<Scope>`.
+     * This ensures that the component owning this scope (typically the Application component)
+     * exposes the necessary injector maps. This allows the dependency dispatcher to retrieve
+     * and execute the correct injector for a given Android component at runtime.
+     * * Output example:
+     * ```kotlin
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Scope>_SealantInjectorsOwner : SealantInjectorsOwner
+     * ```
+     */
+    private fun buildInjectorsOwner(
+        scopeClassName: ClassName,
+        scopeClassNameStr: String,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val ioSnStr = ClassNames.sealantInjectorsOwner.generateSimpleNameString()
+        val ioClassName = ClassName(integrationPkg, "${scopeClassNameStr}_$ioSnStr")
+
+        return InterfaceSpec(ioClassName) {
+            addSuperinterface(ClassNames.sealantInjectorsOwner)
+            addContributesToAnnotation(scopeClassName)
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
@@ -174,7 +193,6 @@ public class AppComponentIntegrationSymbolProcessor(
     @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return AppComponentIntegrationSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

@@ -24,12 +24,15 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STAR
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -43,7 +46,7 @@ import dev.steinerok.sealant.compiler.ParameterSpec
 import dev.steinerok.sealant.compiler.PropertySpec
 import dev.steinerok.sealant.compiler.SealantFeature
 import dev.steinerok.sealant.compiler.addContributesToAnnotation
-import dev.steinerok.sealant.compiler.addPrimaryConstructorAndProperties
+import dev.steinerok.sealant.compiler.addPrimaryInjectConstructor
 import dev.steinerok.sealant.compiler.ksp.SealantFileSpec
 import dev.steinerok.sealant.compiler.ksp.SealantOptions
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
@@ -54,172 +57,217 @@ import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
  * Description of the injection component generation for the target class.
- * This generator creates a set of classes for seamless integration with Dagger/Anvil,
+ * This generator creates a set of classes for seamless integration with Dagger+Anvil/Metro,
  * providing dependency injection and registering the injector in the graph.
- *
- * Should generate the following components:
- *
- * 1. Main Injector Class:
- * Implements the base `SealantInjector` interface and encapsulates the injection logic.
- * A `MembersInjector` is passed into the constructor, which performs the actual field injection
- * into the target class.
- * ```
- * public class <Type>_SealantInjector @Inject constructor(
- *     public override val injector: MembersInjector<<Type>>
- * ) : SealantInjector<<Type>>
- * ```
- *
- * 2. Binds Module for the injectors map:
- * Adds the generated injector to the Dagger Multibinding Map.
- * This allows a factory or dispatcher to find the required injector at runtime
- * using the activity key (`ActivityKey`), mapping the `<Type>` to its `AnvilInjector` implementation.
- * ```
- * @Module
- * @ContributesTo(scope = <Scope>::class)
- * public interface <Type>_SealantInjector_BindsModule {
- *     @Binds
- *     @IntoMap
- *     @ActivityKey(<Type>::class)
- *     public fun bind(instance: <Type>_SealantInjector): AnvilInjector<*>
- * }
- * ```
- *
- * 3. !!! Only for Metro !!! Provides Module for the bridge with Dagger MembersInjector:
- * Acts as an adapter between the `MetroMembersInjector` and the standard `DaggerMembersInjector`.
- * It allows the Dagger graph to correctly resolve dependencies for `MembersInjector<<Type>>`,
- * which is requested in the constructor of the main injector class.
- * ```
- * @Module
- * @ContributesTo(scope = AppScope::class)
- * public object <Type>_SealantInjector_ProvidesModule {
- *     @Provides
- *     public fun provideDaggerMembersInjector(
- *         metroMembersInjector: MetroMembersInjector<<Type>>
- *     ): DaggerMembersInjector<<Type>> = metroMembersInjector.asDaggerMembersInjector()
- * }
- * ```
  */
 public class AppComponentInjectionSymbolProcessor(
     private val codeGenerator: CodeGenerator,
-    options: Map<String, String>,
+    private val options: Map<String, String>,
     private val logger: KSPLogger,
 ) : SymbolProcessor {
 
-    private val options = SealantOptions.load(options, logger)
+    private val sealantOptions = SealantOptions.load(options, logger)
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver
+        val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.injectWith)
             .filterIsInstance<KSClassDeclaration>()
+            .partition { symbol -> symbol.validate() }
+
+        validSymbols
             .filter { annotated ->
                 annotated
                     .scope()
                     .hasSealantFeatureForScope(SealantFeature.AppComponent)
             }
-            .onEach { _ ->  /* Verification if you need */ }
             .forEach { symbol ->
-                generateByProcessor(symbol).writeTo(
+                generateByProcessor(symbol)?.writeTo(
                     codeGenerator = codeGenerator,
                     aggregating = false,
                 )
             }
-        return emptyList()
+
+        return invalidSymbols
     }
 
-    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec {
-        val packageName = clazz.packageName.asString()
-        val fileName = clazz.simpleName.asString() + "_Injection"
-        //
-        val content = SealantFileSpec(packageName, fileName) {
-            val origClassName = clazz.toClassName()
-            val origShortName = clazz.simpleName.asString()
-            val scopeClassName = clazz.scope().toClassName()
-            val injectorNameStr = "${origShortName}_${ClassNames.sealantInjector.simpleName}"
-            //
-            val injectorClassName = ClassName(packageName, injectorNameStr)
-            val injectorClass = ClassSpec(injectorClassName) {
-                addSuperinterface(ClassNames.sealantInjector.parameterizedBy(origClassName))
-                val miType = ClassNames.membersInjector.parameterizedBy(origClassName)
-                addPrimaryConstructorAndProperties(
-                    PropertySpec("injector", miType) {
-                        addModifiers(KModifier.OVERRIDE)
-                    }
+    private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec? {
+        val origClassName = clazz.toClassName()
+        val origShortName = clazz.simpleName.asString()
+
+        val injectionKey = when {
+            clazz.implements(ClassNames.androidActivity) -> ClassNames.activityKey
+            clazz.implements(ClassNames.androidBroadcastReceiver) -> ClassNames.broadcastReceiverKey
+            clazz.implements(ClassNames.androidService) -> ClassNames.serviceKey
+            clazz.implements(ClassNames.androidContentProvider) -> ClassNames.contentProviderKey
+            else -> {
+                logger.error(
+                    message = "Unsupported injectable type: ${clazz.qualifiedName?.asString()}",
+                    symbol = clazz,
                 )
-                addOriginatingKSFile(clazz.requireContainingFile())
+                return null
             }
-            addType(injectorClass)
-            // Interop from Dagger to Metro, because Metro not generate Dagger MembersInjector
-            if (options.useMetro) {
-                val ipmNameStr = "${injectorNameStr}_ProvidesModule"
-                val ipmClassName = ClassName(packageName, ipmNameStr)
-                val ipmObject = ObjectSpec(ipmClassName) {
-                    addAnnotation(ClassNames.module)
-                    addContributesToAnnotation(scopeClassName)
-                    addFunction(
-                        FunSpec("provideDaggerMembersInjector") {
-                            addAnnotation(ClassNames.provides)
-                            addParameter(
-                                ParameterSpec(
-                                    "metroMembersInjector",
-                                    ClassName("dev.zacsweers.metro", "MembersInjector")
-                                        .parameterizedBy(origClassName)
-                                )
-                            )
-                            returns(ClassNames.membersInjector.parameterizedBy(origClassName))
-                            addStatement(
-                                "return metroMembersInjector.%M()",
-                                MemberName(
-                                    "dev.zacsweers.metro.interop.dagger",
-                                    "asDaggerMembersInjector"
-                                )
-                            )
-                        }
-                    )
-                    addOriginatingKSFile(clazz.requireContainingFile())
-                }
-                addType(ipmObject)
-            }
-            //
-            val ibmNameStr = "${injectorNameStr}_BindsModule"
-            val ibmClassName = ClassName(packageName, ibmNameStr)
-            val ibmInterface = InterfaceSpec(ibmClassName) {
-                addAnnotation(ClassNames.module)
-                addContributesToAnnotation(scopeClassName)
-                addFunction(
-                    FunSpec("bind") {
-                        addAnnotation(ClassNames.binds)
-                        addAnnotation(ClassNames.intoMap)
-                        addAnnotation(
-                            annotationSpec = let {
-                                val key = when {
-                                    clazz.implements(ClassNames.androidActivity) -> ClassNames.activityKey
-                                    clazz.implements(ClassNames.androidBroadcastReceiver) -> ClassNames.broadcastReceiverKey
-                                    clazz.implements(ClassNames.androidContentProvider) -> ClassNames.contentProviderKey
-                                    clazz.implements(ClassNames.androidService) -> ClassNames.serviceKey
-                                    else -> throw IllegalStateException("Unsupported injectable type: ${clazz.qualifiedName?.asString()}")
-                                }
-                                AnnotationSpec(key) { addMember("%T::class", origClassName) }
-                            }
-                        )
-                        addModifiers(KModifier.ABSTRACT)
-                        addParameter(ParameterSpec("instance", injectorClassName))
-                        returns(ClassNames.sealantInjector.parameterizedBy(STAR))
-                    }
-                )
-                addOriginatingKSFile(clazz.requireContainingFile())
-            }
-            addType(ibmInterface)
         }
-        return content
+        val scopeClassName = clazz.scope().toClassName()
+
+        val injectorNameStr = "${origShortName}_${ClassNames.sealantInjector.simpleName}"
+        val injectorClassName = ClassName(origClassName.packageName, injectorNameStr)
+
+        val fileName = "${origShortName}_Injection"
+        val fileNode = clazz.requireContainingFile()
+
+        return SealantFileSpec(origClassName.packageName, fileName) {
+            // Генерируем Main Injector Class
+            addType(buildInjectorClass(origClassName, injectorClassName, fileNode))
+
+            // Генерируем Provides Module для Metro (Metro not generate Dagger MembersInjector)
+            if (sealantOptions.useMetro) {
+                addType(
+                    buildMetroProvidesModule(
+                        origClassName, injectorClassName, scopeClassName, fileNode
+                    )
+                )
+            }
+
+            // Генерируем Binds Module
+            addType(
+                buildBindsModule(
+                    origClassName, injectorClassName, scopeClassName, injectionKey, fileNode
+                )
+            )
+        }
+    }
+
+    /**
+     * Generates the Main Injector Class.
+     * * Implements the base `SealantInjector` interface and encapsulates the injection logic.
+     * A `MembersInjector` is passed into the constructor, which performs the actual field injection
+     * into the target class.
+     * * Output example:
+     * ```kotlin
+     * public class <Type>_SealantInjector @Inject constructor(
+     *     public override val injector: MembersInjector<<Type>>
+     * ) : SealantInjector<<Type>>
+     * ```
+     */
+    private fun buildInjectorClass(
+        origClassName: ClassName,
+        injectorClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        return ClassSpec(injectorClassName) {
+            addSuperinterface(ClassNames.sealantInjector.parameterizedBy(origClassName))
+            val miType = ClassNames.membersInjector.parameterizedBy(origClassName)
+            addPrimaryInjectConstructor(
+                PropertySpec("injector", miType) {
+                    addModifiers(KModifier.OVERRIDE)
+                }
+            )
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the Provides Module for the bridge with Dagger MembersInjector (!!! Only for Metro !!!).
+     * * Acts as an adapter between the `MetroMembersInjector` and the standard `DaggerMembersInjector`.
+     * It allows the Dagger graph to correctly resolve dependencies for `MembersInjector<<Type>>`,
+     * which is requested in the constructor of the main injector class.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = AppScope::class)
+     * public object <Type>_SealantInjector_ProvidesModule {
+     *     @Provides
+     *     public fun provideDaggerMembersInjector(
+     *         metroMembersInjector: MetroMembersInjector<<Type>>
+     *     ): DaggerMembersInjector<<Type>> = metroMembersInjector.asDaggerMembersInjector()
+     * }
+     * ```
+     */
+    private fun buildMetroProvidesModule(
+        origClassName: ClassName,
+        injectorClassName: ClassName,
+        scopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val ipmNameStr = "${injectorClassName.simpleName}_ProvidesModule"
+        val ipmClassName = ClassName(injectorClassName.packageName, ipmNameStr)
+
+        return ObjectSpec(ipmClassName) {
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec("provideDaggerMembersInjector") {
+                addAnnotation(ClassNames.provides)
+                addParameter(
+                    ParameterSpec(
+                        "metroMembersInjector",
+                        ClassName("dev.zacsweers.metro", "MembersInjector")
+                            .parameterizedBy(origClassName)
+                    )
+                )
+                returns(ClassNames.membersInjector.parameterizedBy(origClassName))
+                addStatement(
+                    "return metroMembersInjector.%M()",
+                    MemberName("dev.zacsweers.metro.interop.dagger", "asDaggerMembersInjector")
+                )
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
+    /**
+     * Generates the Binds Module for the injectors map.
+     * * Adds the generated injector to the Dagger Multibinding Map.
+     * This allows a factory or dispatcher to find the required injector at runtime
+     * using the activity key (`ActivityKey`), mapping the `<Type>` to its `AnvilInjector` implementation.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = <Scope>::class)
+     * public interface <Type>_SealantInjector_BindsModule {
+     *     @Binds
+     *     @IntoMap
+     *     @ActivityKey(<Type>::class)
+     *     public fun bind(instance: <Type>_SealantInjector): AnvilInjector<*>
+     * }
+     * ```
+     */
+    private fun buildBindsModule(
+        origClassName: ClassName,
+        injectorClassName: ClassName,
+        scopeClassName: ClassName,
+        injectionKey: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val ibmNameStr = "${injectorClassName.simpleName}_BindsModule"
+        val ibmClassName = ClassName(injectorClassName.packageName, ibmNameStr)
+
+        return InterfaceSpec(ibmClassName) {
+            addAnnotation(ClassNames.module)
+            addContributesToAnnotation(scopeClassName)
+
+            addFunction(FunSpec("bind") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(
+                    AnnotationSpec(injectionKey) { addMember("%T::class", origClassName) }
+                )
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("instance", injectorClassName))
+                returns(ClassNames.sealantInjector.parameterizedBy(STAR))
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
     }
 
     /**
      * Entry point for KSP to pick up our [SymbolProcessor].
      */
-    @Suppress("unused")
     @AutoService(SymbolProcessorProvider::class)
     public class Provider : SymbolProcessorProvider {
-
         override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
             return AppComponentInjectionSymbolProcessor(
                 codeGenerator = environment.codeGenerator,

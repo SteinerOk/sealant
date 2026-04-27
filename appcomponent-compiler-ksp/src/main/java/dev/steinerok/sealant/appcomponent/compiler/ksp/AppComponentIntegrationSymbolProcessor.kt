@@ -45,9 +45,10 @@ import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Description of the foundational Dagger multibinding module and interface generation.
- * This generator creates the core infrastructure needed to collect and manage
- * injectors for various Android components across the specified scope.
+ * Generates scope-level injector infrastructure for Sealant app-component integration.
+ *
+ * The emitted types expose empty-safe multibinding maps and the owner interface through which
+ * Android entry points can later resolve their generated injectors.
  */
 public class AppComponentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -71,7 +72,7 @@ public class AppComponentIntegrationSymbolProcessor(
             .forEach { (clazz, scope) ->
                 generateByProcessor(clazz, scope).writeTo(
                     codeGenerator = codeGenerator,
-                    aggregating = false, // Isolating mode
+                    aggregating = false,
                 )
             }
 

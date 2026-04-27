@@ -23,9 +23,11 @@ import javax.inject.Provider
 private typealias FragmentProviderMap = Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
 
 /**
- * A [FragmentFactory] that can hold onto multiple other FragmentFactory [Provider]'s.
+ * A [FragmentFactory] backed by Sealant's fragment multibinding map.
  *
- * Note this was designed to be used with [FragmentKey].
+ * If the requested fragment class is present in the generated provider map, the fragment is
+ * created through Dagger. Otherwise this factory falls back to the default
+ * [FragmentFactory.instantiate] behavior.
  */
 public class SealantFragmentFactory @InternalSealantApi constructor(
     private val fragProviderMap: FragmentProviderMap,
@@ -36,12 +38,10 @@ public class SealantFragmentFactory @InternalSealantApi constructor(
         return fragProviderMap[fragmentClazz]?.get() ?: super.instantiate(classLoader, className)
     }
 
-    /**
-     *
-     */
+    /** Exposes a configured [SealantFragmentFactory] from the owning component. */
     public interface Owner {
 
-        /**  */
+        /** Returns the fragment factory associated with the current scope. */
         public fun sealantFragmentFactory(): SealantFragmentFactory
     }
 }

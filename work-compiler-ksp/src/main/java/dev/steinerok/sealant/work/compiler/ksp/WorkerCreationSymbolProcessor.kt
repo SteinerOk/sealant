@@ -51,11 +51,10 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Description of the WorkManager factory and multibinding module generation.
- * This generator creates the necessary infrastructure to support constructor
- * dependency injection for Android's WorkManager via Assisted Injection.
- * It allows Workers to receive both system-provided parameters and
- * Dagger-provided dependencies.
+ * Generates assisted-worker bindings for classes annotated with `@ContributesWorker`.
+ *
+ * Sealant uses these bindings to connect WorkManager runtime parameters with Dagger-provided
+ * dependencies through a custom [dev.steinerok.sealant.work.SealantWorkerFactory].
  */
 public class WorkerCreationSymbolProcessor(
     private val codeGenerator: CodeGenerator,

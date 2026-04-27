@@ -2,7 +2,7 @@ package dev.steinerok.sealant.viewmodel.lifecycle
 
 import android.os.Looper
 
-/** Internal implementation. Do not use. */
+/** Internal main-thread implementation of [ViewModelLifecycle]. */
 internal class RetainedLifecycleImpl : ViewModelLifecycle {
 
     private val listeners = mutableSetOf<RetainedLifecycle.OnClearedListener>()
@@ -37,12 +37,12 @@ internal class RetainedLifecycleImpl : ViewModelLifecycle {
     }
 }
 
-/** Thread utility methods. */
+/** Thread utility methods used by the retained lifecycle implementation. */
 private object ThreadUtil {
 
     private var mainThread: Thread? = null
 
-    /** Returns true if the current thread is the Main thread. */
+    /** Returns `true` when the current thread is Android's main thread. */
     fun isMainThread(): Boolean {
         if (mainThread == null) {
             mainThread = Looper.getMainLooper().thread
@@ -50,9 +50,8 @@ private object ThreadUtil {
         return Thread.currentThread() === mainThread
     }
 
-    /** Checks that the current thread is the Main thread. Otherwise, throws an exception. */
+    /** Verifies that the current thread is the main thread and throws otherwise. */
     fun ensureMainThread() {
-        // Теперь вызываем isMainThread() со скобками
         check(isMainThread()) { "Must be called on the Main thread." }
     }
 }

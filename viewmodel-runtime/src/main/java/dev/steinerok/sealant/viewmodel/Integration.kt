@@ -22,21 +22,27 @@ import dev.steinerok.sealant.viewmodel.lifecycle.ViewModelLifecycle
 import javax.inject.Provider
 
 /**
+ * Marker scope used for generated ViewModel-only subcomponents.
  *
+ * Bindings contributed with `@ContributesToViewModel` are ultimately installed into a generated
+ * scope derived from this marker.
  */
 public abstract class SealantViewModelScope private constructor()
 
 /**
+ * Base contract for the generated subcomponent responsible for creating Sealant ViewModels.
  *
+ * Every enabled scope gets its own implementation that accepts a [SavedStateHandle] and
+ * [ViewModelLifecycle] at creation time.
  */
 public interface SealantViewModelSubcomponent {
 
-    /**
-     *
-     */
+    /** Factory that creates a scope-specific ViewModel subcomponent instance. */
     public interface Factory {
 
-        /**  */
+        /**
+         * Creates a new ViewModel subcomponent for a single ViewModel creation request.
+         */
         public fun create(
             ssHandle: SavedStateHandle,
             vmLifecycle: ViewModelLifecycle,
@@ -44,37 +50,40 @@ public interface SealantViewModelSubcomponent {
     }
 
     /**
-     *
+     * Parent-scope contract exposing ViewModel creation infrastructure to Android entry points.
      */
     public interface Parent {
 
-        /**  */
+        /** Set of ViewModel classes supported by the current parent scope. */
         @InternalSealantApi
         @get:SealantViewModelSupport.KeySet
         public val vmKeySet: Set<Class<out ViewModel>>
 
-        /**  */
+        /** Map from scope name to the generated subcomponent factory for that scope. */
         @InternalSealantApi
         @get:SealantViewModelSupport.SubcomponentMap
         public val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<Factory>>
 
-        /**  */
+        /** Entry point used by UI layers to build [androidx.lifecycle.ViewModelProvider.Factory] instances. */
         @InternalSealantApi
         public val vmFactoryCreator: SealantViewModelFactoryCreator
     }
 }
 
 /**
+ * Internal view of a generated ViewModel subcomponent after it has been created.
  *
+ * It exposes both the regular provider map and the assisted-factory map used by
+ * [SealantViewModelFactory].
  */
 @InternalSealantApi
 public interface ViewModelFactoriesOwner {
 
-    /**  */
+    /** Map of directly instantiable ViewModels. */
     @get:SealantViewModelMap
     public val vmProviderMap: Map<Class<out ViewModel>, @JvmSuppressWildcards Provider<ViewModel>>
 
-    /**  */
+    /** Map of assisted factories for ViewModels that require runtime arguments. */
     @get:SealantViewModelAssistedMap
     public val vmAssistedMap: Map<Class<out ViewModel>, Any>
 }

@@ -18,7 +18,10 @@ package dev.steinerok.di.common
 import javax.inject.Qualifier
 
 /**
- * Annotation for an Application Context dependency.
+ * Qualifier for dependencies that must use the process-wide `Application` [android.content.Context].
+ *
+ * This is useful when a graph may otherwise expose an `Activity`, `Service` or other narrower
+ * `Context` that should not be used for retained objects.
  */
 @Qualifier
 @Target(

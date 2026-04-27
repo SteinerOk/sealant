@@ -23,7 +23,11 @@ import javax.inject.Qualifier
 import kotlin.reflect.KClass
 
 /**
+ * Contributes a [ViewModel] to Sealant's generated ViewModel graph.
  *
+ * The annotated class is registered for the supplied scope and can then be created through
+ * [SealantViewModelFactoryCreator]. Both regular `@Inject` and `@AssistedInject` constructors
+ * are supported.
  */
 @Keep
 @Target(AnnotationTarget.CLASS)
@@ -42,7 +46,10 @@ public annotation class ContributesViewModel(
 )
 
 /**
+ * Contributes a Dagger module or binding type to the generated `ViewModel_<Scope>` graph.
  *
+ * This is typically used for dependencies that should only exist while a Sealant-created
+ * ViewModel subcomponent is alive.
  */
 @Keep
 @Target(AnnotationTarget.CLASS)
@@ -77,9 +84,7 @@ public annotation class ViewModelKey(
     val value: KClass<out ViewModel>,
 )
 
-/**
- *
- */
+/** Qualifier for the multibinding map of directly creatable ViewModel providers. */
 @InternalSealantApi
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -108,14 +113,12 @@ public annotation class SealantViewModelAssistedMap
 
 
 /**
- *
+ * Namespace for internal qualifiers used by Sealant's generated ViewModel integration code.
  */
 @InternalSealantApi
 public interface SealantViewModelSupport {
 
-    /**
-     *
-     */
+    /** Qualifies the set of ViewModel classes supported by a parent scope. */
     @Qualifier
     @Retention(AnnotationRetention.RUNTIME)
     @Target(
@@ -126,9 +129,7 @@ public interface SealantViewModelSupport {
     )
     public annotation class KeySet
 
-    /**
-     *
-     */
+    /** Qualifies the map of scope name to generated ViewModel subcomponent factory. */
     @Qualifier
     @Retention(AnnotationRetention.RUNTIME)
     @Target(

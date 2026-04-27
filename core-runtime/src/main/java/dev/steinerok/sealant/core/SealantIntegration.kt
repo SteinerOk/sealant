@@ -18,12 +18,17 @@ package dev.steinerok.sealant.core
 import kotlin.reflect.KClass
 
 /**
+ * Marks an integration entry point for one or more Sealant-enabled scopes.
  *
+ * Sealant processors scan this annotation to generate the top-level infrastructure that exposes
+ * factories, injector maps and other scope-level bindings from the owning component.
+ *
+ * This is typically placed on the `Application` class.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class SealantIntegration(
 
-    /**  */
+    /** Scopes that should expose generated Sealant integrations from this entry point. */
     val scopes: Array<KClass<out Any>>,
 )

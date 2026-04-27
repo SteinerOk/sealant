@@ -26,7 +26,10 @@ import javax.inject.Provider
 private typealias WorkerAssistedFactoryProviderMap = Map<String, @JvmSuppressWildcards Provider<WorkerAssistedFactory<out ListenableWorker>>>
 
 /**
+ * WorkManager [WorkerFactory] backed by Sealant's assisted worker multibindings.
  *
+ * WorkManager asks this factory to create a worker by class name. Sealant resolves the matching
+ * assisted factory from the Dagger map and delegates construction to it.
  */
 public class SealantWorkerFactory @InternalSealantApi constructor(
     private val wafProviderMap: WorkerAssistedFactoryProviderMap,
@@ -42,12 +45,10 @@ public class SealantWorkerFactory @InternalSealantApi constructor(
         return wafProvider.get().create(appContext, workerParameters)
     }
 
-    /**
-     *
-     */
+    /** Exposes a configured [SealantWorkerFactory] from the owning component. */
     public interface Owner {
 
-        /**  */
+        /** Returns the worker factory associated with the current scope. */
         public fun sealantWorkerFactory(): SealantWorkerFactory
     }
 }

@@ -56,9 +56,10 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Description of the injection component generation for the target class.
- * This generator creates a set of classes for seamless integration with Dagger+Anvil/Metro,
- * providing dependency injection and registering the injector in the graph.
+ * Generates member-injection bindings for Android framework entry points annotated with `@InjectWith`.
+ *
+ * For each supported type Sealant emits a small injector wrapper plus the Dagger bindings needed
+ * to register it in the scope-level injector map.
  */
 public class AppComponentInjectionSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -119,8 +120,8 @@ public class AppComponentInjectionSymbolProcessor(
             // Генерируем Main Injector Class
             addType(buildInjectorClass(origClassName, injectorClassName, fileNode))
 
-            // Генерируем Provides Module для Metro (Metro not generate Dagger MembersInjector)
-            if (sealantOptions.useMetro) {
+            // Generate the Metro interop bridge when the graph exposes Metro MembersInjector.
+            if (sealantOptions.useMetroInterop) {
                 addType(
                     buildMetroProvidesModule(
                         origClassName, injectorClassName, scopeClassName, fileNode
@@ -168,7 +169,7 @@ public class AppComponentInjectionSymbolProcessor(
     }
 
     /**
-     * Generates the Provides Module for the bridge with Dagger MembersInjector (!!! Only for Metro !!!).
+     * Generates the bridge from Metro's `MembersInjector` to Dagger's `MembersInjector`.
      * * Acts as an adapter between the `MetroMembersInjector` and the standard `DaggerMembersInjector`.
      * It allows the Dagger graph to correctly resolve dependencies for `MembersInjector<<Type>>`,
      * which is requested in the constructor of the main injector class.
@@ -218,7 +219,7 @@ public class AppComponentInjectionSymbolProcessor(
     }
 
     /**
-     * Generates the Binds Module for the injectors map.
+     * Generates the binds module that contributes the injector into the scope-level map.
      * * Adds the generated injector to the Dagger Multibinding Map.
      * This allows a factory or dispatcher to find the required injector at runtime
      * using the activity key (`ActivityKey`), mapping the `<Type>` to its `AnvilInjector` implementation.

@@ -22,7 +22,10 @@ import dev.steinerok.sealant.compiler.ClassNames
 import dev.steinerok.sealant.compiler.FileSpec
 
 /**
+ * Creates a [FileSpec] preconfigured for Sealant-generated source files.
  *
+ * The resulting file opts into Sealant's internal and experimental APIs and suppresses the
+ * warnings commonly triggered by generated code.
  */
 @Suppress("FunctionName")
 public fun SealantFileSpec(
@@ -41,9 +44,7 @@ public fun SealantFileSpec(
     addFileComment(generatorComment)
 }
 
-/**
- *
- */
+/** Variant of [SealantFileSpec] that derives package and file names from [className]. */
 @Suppress("FunctionName")
 public fun SealantFileSpec(
     className: ClassName,

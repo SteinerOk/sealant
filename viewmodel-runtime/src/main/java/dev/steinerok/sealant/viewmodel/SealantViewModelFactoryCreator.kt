@@ -28,7 +28,11 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 /**
- * The same functionality as InternalFactoryFactory inside DefaultViewModelFactories in Hilt
+ * Builds [ViewModelProvider.Factory] instances backed by Sealant's generated ViewModel graph.
+ *
+ * This plays the same role as Hilt's internal factory creator: it combines the scope-level
+ * registry of supported ViewModels with the generated subcomponent factories and produces a
+ * factory that can be installed as the default one for an activity or fragment.
  */
 public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject constructor(
     private val application: Application,
@@ -36,6 +40,7 @@ public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject con
     @param:SealantViewModelSupport.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,
 ) {
 
+    /** Creates a Sealant-aware [ViewModelProvider.Factory] for the given [activity]. */
     public fun fromActivity(
         activity: ComponentActivity,
         delegateFactory: ViewModelProvider.Factory? = activity.defaultViewModelProviderFactory,
@@ -45,6 +50,7 @@ public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject con
         delegateFactory = delegateFactory,
     )
 
+    /** Creates a Sealant-aware [ViewModelProvider.Factory] for the given [fragment]. */
     public fun fromFragment(
         fragment: Fragment,
         delegateFactory: ViewModelProvider.Factory? = fragment.defaultViewModelProviderFactory,
@@ -54,6 +60,13 @@ public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject con
         delegateFactory = delegateFactory,
     )
 
+    /**
+     * Creates a Sealant-aware [ViewModelProvider.Factory] for an arbitrary
+     * [SavedStateRegistryOwner].
+     *
+     * If [delegateFactory] is omitted, a default [SavedStateViewModelFactory] is used for
+     * non-Sealant ViewModels.
+     */
     public fun fromSsrOwner(
         owner: SavedStateRegistryOwner,
         defaultArgs: Bundle? = null,
@@ -68,12 +81,10 @@ public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject con
         )
     }
 
-    /**
-     *
-     */
+    /** Exposes [SealantViewModelFactoryCreator] from a generated scope owner. */
     public interface Owner {
 
-        /**  */
+        /** Returns the creator configured for the current scope. */
         public fun sealantViewModelFactoryCreator(): SealantViewModelFactoryCreator
     }
 }

@@ -21,14 +21,17 @@ import dev.steinerok.sealant.core.internal.InternalSealantApi
 import kotlin.reflect.KClass
 
 /**
+ * Contributes a constructor-injected [Fragment] to Sealant's fragment factory bindings.
  *
+ * Sealant generates a Dagger multibinding entry keyed by the fragment class so
+ * [SealantFragmentFactory] can instantiate it through the graph at runtime.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class ContributesFragment(
 
     /**
-     * The scope in which to include this module.
+     * Scope whose fragment bindings should include the annotated fragment.
      */
     val scope: KClass<out Any>,
 
@@ -56,8 +59,6 @@ public annotation class ContributesFragment(
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class FragmentKey(
 
-    /**
-     *
-     */
+    /** Fragment class used as the multibinding key. */
     val value: KClass<out Fragment>,
 )

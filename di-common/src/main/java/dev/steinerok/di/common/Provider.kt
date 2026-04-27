@@ -1,14 +1,15 @@
 package dev.steinerok.di.common
 
 /**
- * A class that provides and maintains a single instance of a [T].
+ * Exposes the application-level root graph to code that only has access to an `Application`.
  *
- * NOTE: This should **only** be applied to the Application class.
+ * Sealant samples use this as a lightweight bridge from Android framework entry points to the
+ * app component. In practice this interface is expected to be implemented by the `Application`.
  */
 public interface AppComponentProvider<T> {
 
     /**
-     * An instance of the [T].
+     * Root application graph instance.
      */
     public val appComponent: T
 }

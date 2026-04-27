@@ -18,12 +18,19 @@ package dev.steinerok.sealant.appcomponent
 import kotlin.reflect.KClass
 
 /**
+ * Resolves the generated injector maps for a concrete scope and runtime Android instance.
  *
+ * The resolver usually looks up an owning Dagger/Anvil component for the supplied scope and
+ * returns its [SealantInjectorsOwner] view.
  */
 public typealias InjectorsResolver = (scope: KClass<out Any>, injectable: Any) -> SealantInjectorsOwner
 
 /**
+ * Performs member injection for a [SealantInjectable] annotated with [InjectWith].
  *
+ * The function locates the scope declared on the target class, asks [injectorsResolver] for the
+ * component that owns that scope, then executes the generated [SealantInjector] registered for
+ * the concrete runtime class.
  */
 public fun injectViaSealant(
     injectable: SealantInjectable<*>,

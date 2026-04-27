@@ -7,9 +7,7 @@ import com.google.devtools.ksp.symbol.KSType
 import dev.steinerok.sealant.compiler.ClassNames
 import dev.steinerok.sealant.compiler.SealantFeature
 
-/**
- *
- */
+/** Returns the required `scope` argument from the declaration or fails with a descriptive error. */
 public fun KSClassDeclaration.scope(): KSType {
     return requireNotNull(scopeOrNull()) {
         "Couldn't find scope for $this."
@@ -17,7 +15,9 @@ public fun KSClassDeclaration.scope(): KSType {
 }
 
 /**
+ * Returns the effective `scope` argument from annotations that expose such a parameter.
  *
+ * When multiple scope-bearing annotations are present, all of them must point to the same scope.
  */
 public fun KSClassDeclaration.scopeOrNull(): KSType? {
     val annotationsWithScopeParameter = annotations
@@ -69,9 +69,7 @@ internal fun KSClassDeclaration.parentScope(): KSClassDeclaration? {
         ?.declaration as? KSClassDeclaration
 }
 
-/**
- *
- */
+/** Reads all scopes listed in `@SealantIntegration(scopes = ...)` on the current declaration. */
 public fun KSAnnotated.findScopesForIntegration(): Sequence<KSClassDeclaration> {
     return findAnnotations(ClassNames.sealantIntegration)
         .flatMap { annotation ->
@@ -82,9 +80,7 @@ public fun KSAnnotated.findScopesForIntegration(): Sequence<KSClassDeclaration> 
         .distinct()
 }
 
-/**
- *
- */
+/** Filters integration scopes down to those that enable the requested Sealant [feature]. */
 public fun KSAnnotated.findScopesForSealantFeatureIntegration(
     feature: SealantFeature,
 ): Sequence<KSClassDeclaration> {

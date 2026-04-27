@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+## Version 0.6.0-beta02
+
+_2026-04-28_
+
+* Migrate Sealant code generation to Anvil-KSP and publish new `*-runtime` and `*-compiler-ksp`
+  artifacts for core, appcomponent, fragment, viewmodel, and work integrations. This release
+  replaces the previous `*-api`, `*-codegen` and embedded compiler modules.
+* Reorganize project modules and build logic, add a version catalog and convention plugins, and
+  upgrade Gradle, Kotlin, KSP, AndroidX, and Dagger-related dependencies. This release requires
+  Kotlin `2.3.21` and KSP `2.3.7`.
+* Expand AppComponent integration to additional Android component types and add the
+  `AppComponentProvider` interface.
+* Add Metro support for Dagger integration via the `sealant.codegen.mode=metroInterop` option.
+* Enhance ViewModel support with `SealantViewModelSupport`, assisted injection factories,
+  improved generated multibindings and subcomponent bindings, and lifecycle-aware creation with
+  `ViewModelLifecycle` and retained lifecycle support.
+* Remove deprecated `AbstractSavedStateViewModelFactory` usage and legacy ViewModel factory
+  wiring, and improve generated modules, interfaces, and documentation for fragments, workers, and
+  viewmodels.
+
 ## Version 0.3.1
 
 _2023-11-18_

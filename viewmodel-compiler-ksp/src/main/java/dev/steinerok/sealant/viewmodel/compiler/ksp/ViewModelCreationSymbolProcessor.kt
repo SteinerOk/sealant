@@ -54,11 +54,11 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Description of the ViewModel injection infrastructure generation.
- * This generator creates the necessary Dagger modules to support Multibinding
- * for ViewModels, allowing a custom `ViewModelProvider.Factory` to dynamically
- * instantiate them. The architectural approach closely mirrors Dagger Hilt's
- * internal code generation but is adapted for custom Anvil scopes.
+ * Generates per-ViewModel bindings required by Sealant's custom `ViewModelProvider.Factory`.
+ *
+ * The overall structure is inspired by Hilt's internal ViewModel code generation, but adapted to
+ * Sealant scopes and to class-keyed multibindings instead of string-keyed ones.
+ *
  * * Architecture Note (Hilt Comparison):
  * This setup achieves the same dependency resolution as Hilt's `@HiltViewModel`
  * codegen. However, there are two key distinctions:

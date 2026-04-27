@@ -16,6 +16,8 @@
 package dev.steinerok.di.common
 
 /**
- * Runtime utility method for performing a casting in code.
+ * Performs an unchecked cast with a reified target type.
+ *
+ * This is mainly a readability helper for code that already knows the expected runtime type.
  */
 public inline fun <reified T> Any.cast(): T = this as T

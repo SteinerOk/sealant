@@ -45,10 +45,10 @@ import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 
 /**
- * Description of the module wrapper generation for ViewModel scopes.
- * This generator creates an intermediary interface to safely include
- * an existing Dagger module in a specific Anvil ViewModel scope,
- * typically used when the original module cannot be directly annotated.
+ * Generates wrapper modules for `@ContributesToViewModel` declarations.
+ *
+ * The wrapper re-exposes an existing module inside the generated `ViewModel_<Scope>` graph
+ * without requiring changes to the original source type.
  */
 public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
     private val codeGenerator: CodeGenerator,

@@ -3,7 +3,9 @@ package dev.steinerok.sealant.viewmodel.lifecycle
 import androidx.annotation.MainThread
 
 /**
- * A class for registered listeners on a retained lifecycle (generally backed up by a ViewModel).
+ * Lifecycle-like contract for objects retained for the lifetime of a ViewModel.
+ *
+ * It is intentionally minimal and currently exposes only an `onCleared` signal.
  */
 public interface RetainedLifecycle {
 
@@ -23,13 +25,12 @@ public interface RetainedLifecycle {
     @MainThread
     public fun removeOnClearedListener(listener: OnClearedListener)
 
-    /** Listener for when the retained lifecycle is cleared. */
+    /** Listener invoked when the retained lifecycle is cleared. */
     public fun interface OnClearedListener {
+        /** Called when the owning retained object is being cleared permanently. */
         public fun onCleared()
     }
 }
 
-/**
- * A class for registering listeners on the ViewModel lifecycle.
- */
+/** Retained lifecycle implementation specifically associated with a single ViewModel instance. */
 public interface ViewModelLifecycle : RetainedLifecycle

@@ -49,9 +49,10 @@ import dev.steinerok.sealant.compiler.ksp.parentScopeWithSealantFeature
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Description of the integrative WorkManager module and factory owner generation.
- * This generator creates the centralized infrastructure required to configure
- * a custom Dagger-aware `WorkerFactory` for a specific scope.
+ * Generates the shared WorkManager integration for Sealant-enabled scopes.
+ *
+ * The emitted types collect worker assisted factories into a multibinding map and expose the
+ * resulting [dev.steinerok.sealant.work.SealantWorkerFactory] from the owning component.
  */
 public class WorkIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,

@@ -25,13 +25,16 @@ import kotlin.reflect.KClass
 
 /**
  * Annotates a member-injected class to indicate the scope which will provide its dependencies
- * for all Android types like Activities, Services, etc.
+ * for Android framework entry points such as activities, services and content providers.
  *
- * Usage:
+ * Sealant generates a scoped injector map keyed by the annotated class, then
+ * [injectViaSealant] resolves and executes the correct injector at runtime.
+ *
+ * Example:
  * ```kotlin
  * @InjectWith(SomeAnvilScope::class)
  * class MainActivity : ComponentActivity {
- *
+ *     @Inject lateinit var dependency: SomeDependency
  * }
  * ```
  */
@@ -44,9 +47,7 @@ public annotation class InjectWith(
 )
 
 
-/**
- *
- */
+/** Internal [MapKey] used for activity injector multibindings. */
 @InternalSealantApi
 @MapKey
 @Target(
@@ -57,13 +58,11 @@ public annotation class InjectWith(
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class ActivityKey(
 
-    /**  */
+    /** Activity class used as the multibinding key. */
     val value: KClass<out Activity>,
 )
 
-/**
- *
- */
+/** Internal [MapKey] used for broadcast receiver injector multibindings. */
 @InternalSealantApi
 @MapKey
 @Target(
@@ -74,13 +73,11 @@ public annotation class ActivityKey(
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class BroadcastReceiverKey(
 
-    /**  */
+    /** BroadcastReceiver class used as the multibinding key. */
     val value: KClass<out BroadcastReceiver>,
 )
 
-/**
- *
- */
+/** Internal [MapKey] used for content provider injector multibindings. */
 @InternalSealantApi
 @MapKey
 @Target(
@@ -91,13 +88,11 @@ public annotation class BroadcastReceiverKey(
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class ContentProviderKey(
 
-    /**  */
+    /** ContentProvider class used as the multibinding key. */
     val value: KClass<out ContentProvider>,
 )
 
-/**
- *
- */
+/** Internal [MapKey] used for service injector multibindings. */
 @InternalSealantApi
 @MapKey
 @Target(
@@ -108,6 +103,6 @@ public annotation class ContentProviderKey(
 @Retention(AnnotationRetention.RUNTIME)
 public annotation class ServiceKey(
 
-    /**  */
+    /** Service class used as the multibinding key. */
     val value: KClass<out Service>,
 )

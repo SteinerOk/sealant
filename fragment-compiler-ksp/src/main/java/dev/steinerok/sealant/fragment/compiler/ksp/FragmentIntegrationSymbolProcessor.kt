@@ -49,9 +49,10 @@ import dev.steinerok.sealant.compiler.ksp.parentScopeWithSealantFeature
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Description of the Fragment factory infrastructure generation.
- * This generator creates the necessary multibinding and factory setup
- * to support constructor injection for Fragments within a specific Dagger/Anvil scope.
+ * Generates the shared fragment-factory infrastructure for every Sealant-enabled scope.
+ *
+ * The resulting bindings aggregate fragment providers and expose a ready-to-use
+ * [dev.steinerok.sealant.fragment.SealantFragmentFactory] from the owning component.
  */
 public class FragmentIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,

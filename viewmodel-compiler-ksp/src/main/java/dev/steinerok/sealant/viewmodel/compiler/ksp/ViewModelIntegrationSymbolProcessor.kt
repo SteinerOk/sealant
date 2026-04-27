@@ -50,10 +50,10 @@ import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 
 /**
- * Description of the ViewModel Subcomponent and factory infrastructure generation.
- * This generator creates the core Dagger architecture required to instantiate ViewModels
- * that depend on a `SavedStateHandle`. It achieves this by generating a dedicated
- * subcomponent for the ViewModel scope, allowing the state handle to be bound at runtime.
+ * Generates the shared subcomponent and factory infrastructure behind Sealant ViewModel support.
+ *
+ * Each enabled scope receives a generated ViewModel subcomponent that accepts runtime state and
+ * lifecycle objects, plus the parent-scope bindings needed to discover and create it.
  */
 public class ViewModelIntegrationSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -98,7 +98,7 @@ public class ViewModelIntegrationSymbolProcessor(
         val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
         val vmsNameStr = "${scopeClassNameStr}_$vmsSnStr"
         val vmsClassName = ClassName(integrationPkg, vmsNameStr)
-        val mvmsNameStr = if (sealantOptions.useMetro) vmsNameStr else "Merged$vmsNameStr"
+        val mvmsNameStr = if (sealantOptions.useMetroInterop) vmsNameStr else "Merged$vmsNameStr"
         val mvmsClassName = ClassName(integrationPkg, mvmsNameStr)
 
         val fileNode = clazz.requireContainingFile()
@@ -121,7 +121,7 @@ public class ViewModelIntegrationSymbolProcessor(
                 )
             )
 
-            if (sealantOptions.useMetro) {
+            if (sealantOptions.useMetroInterop) {
                 addType(buildCreatorProvidesModule(scopeClassNameStr, scopeClassName, fileNode))
             }
 
@@ -142,7 +142,7 @@ public class ViewModelIntegrationSymbolProcessor(
      * @MergeSubcomponent(scope = ViewModel_<Scope>::class)
      * public interface <Scope>_SealantViewModelSubcomponent : SealantViewModelSubcomponent {
      *
-     *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in Metro
+     *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in metro interop mode
      *     @Subcomponent.Factory
      *     public interface Factory : SealantViewModelSubcomponent.Factory {
      *         public override fun create(
@@ -173,7 +173,7 @@ public class ViewModelIntegrationSymbolProcessor(
 
             addType(InterfaceSpec("Factory") {
                 addSuperinterface(ClassNames.sealantViewModelSubcomponentFactory)
-                if (sealantOptions.useMetro) addContributesToAnnotation(scopeClassName)
+                if (sealantOptions.useMetroInterop) addContributesToAnnotation(scopeClassName)
                 addAnnotation(ClassNames.mergeSubcomponentFactory)
                 addFunction(FunSpec("create") {
                     addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
@@ -302,7 +302,7 @@ public class ViewModelIntegrationSymbolProcessor(
     }
 
     /**
-     * !!! Only in Metro !!!
+     * Only used in metro interop mode.
      * Contributes a singleton object module to the `<Scope>`. It provides the
      * `SealantViewModelFactoryCreator` as a scoped instance (`@SingleIn`).
      * * * Output example:

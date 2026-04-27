@@ -24,7 +24,12 @@ import dev.steinerok.sealant.viewmodel.lifecycle.RetainedLifecycleImpl
 import javax.inject.Provider
 
 /**
+ * [ViewModelProvider.Factory] implementation that understands Sealant-generated ViewModel graphs.
  *
+ * For registered ViewModel classes it spins up a generated subcomponent, binds a
+ * [androidx.lifecycle.SavedStateHandle] and [dev.steinerok.sealant.viewmodel.lifecycle.ViewModelLifecycle],
+ * then resolves either a direct provider or an assisted factory. Unknown ViewModels are delegated
+ * to [delegateFactory].
  */
 public class SealantViewModelFactory internal constructor(
     private val vmKeySet: Set<Class<out ViewModel>>,
@@ -116,6 +121,9 @@ public class SealantViewModelFactory internal constructor(
         public val CREATION_CALLBACK_KEY: CreationExtras.Key<(Any) -> ViewModel> =
             object : CreationExtras.Key<(Any) -> ViewModel> {}
 
+        /**
+         * Creates a factory backed by the generated ViewModel infrastructure exposed from [parent].
+         */
         @OptIn(InternalSealantApi::class)
         @JvmStatic
         public fun createInternal(

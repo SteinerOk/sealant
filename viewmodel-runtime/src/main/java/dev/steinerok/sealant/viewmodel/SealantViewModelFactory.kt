@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import dev.steinerok.sealant.core.internal.InternalSealantApi
+import dev.steinerok.sealant.viewmodel.lifecycle.RetainedLifecycleImpl
 import javax.inject.Provider
 
 /**
@@ -53,11 +54,17 @@ public class SealantViewModelFactory internal constructor(
                 "Expected the @ContributesViewModel-annotated class '${modelClass.name}' " +
                         "but required annotation was not found."
             }
+
+            val lifecycle = RetainedLifecycleImpl()
+
             val wmfOwner = requireNotNull(vmSubcomponentFactoryMap[scopeClass.name]) {
                 "Expected the Sealant Subcomponent factory class '${scopeClass.name}' to be " +
                         "available in the multi-binding of @SealantViewModelSupport.SubcomponentMap " +
                         "but none was found. Found only: ${vmSubcomponentFactoryMap.keys.toList()}"
-            }.get().create(ssHandle = extras.createSavedStateHandle()) as ViewModelFactoriesOwner
+            }.get().create(
+                ssHandle = extras.createSavedStateHandle(),
+                vmLifecycle = lifecycle,
+            ) as ViewModelFactoriesOwner
 
             val provider = wmfOwner.vmProviderMap[modelClass]
             val creationCallback = extras[CREATION_CALLBACK_KEY]
@@ -95,6 +102,8 @@ public class SealantViewModelFactory internal constructor(
                     )
                 }
             }
+
+            viewModel.addCloseable { lifecycle.dispatchOnCleared() }
 
             return viewModel
         }

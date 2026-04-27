@@ -34,6 +34,9 @@ internal const val integrationPkg = "sealant.integration.viewmodel"
 internal val ClassNames.contributesViewModel
     get() = ClassName(componentPkg, "ContributesViewModel")
 
+internal val ClassNames.viewModelLifecycle
+    get() = ClassName("$componentPkg.lifecycle", "ViewModelLifecycle")
+
 internal val ClassNames.contributesToViewModel
     get() = ClassName(componentPkg, "ContributesToViewModel")
 

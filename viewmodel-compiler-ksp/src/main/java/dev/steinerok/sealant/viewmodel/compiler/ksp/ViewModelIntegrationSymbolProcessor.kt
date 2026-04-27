@@ -145,7 +145,10 @@ public class ViewModelIntegrationSymbolProcessor(
      *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in Metro
      *     @Subcomponent.Factory
      *     public interface Factory : SealantViewModelSubcomponent.Factory {
-     *         public override fun create(@BindsInstance ssHandle: SavedStateHandle): <Scope>_SealantViewModelSubcomponent
+     *         public override fun create(
+     *             @BindsInstance ssHandle: SavedStateHandle,
+     *             @BindsInstance vmLifecycle: ViewModelLifecycle,
+     *         ): <Scope>_SealantViewModelSubcomponent
      *     }
      *
      *     @ContributesTo(scope = <Scope>::class)
@@ -175,6 +178,9 @@ public class ViewModelIntegrationSymbolProcessor(
                 addFunction(FunSpec("create") {
                     addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
                     addParameter(ParameterSpec("ssHandle", ClassNames.androidxSsHandle) {
+                        addAnnotation(ClassNames.bindsInstance)
+                    })
+                    addParameter(ParameterSpec("vmLifecycle", ClassNames.viewModelLifecycle) {
                         addAnnotation(ClassNames.bindsInstance)
                     })
                     returns(vmsClassName)

@@ -18,6 +18,7 @@ package dev.steinerok.sealant.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dev.steinerok.sealant.core.internal.InternalSealantApi
+import dev.steinerok.sealant.viewmodel.lifecycle.ViewModelLifecycle
 import javax.inject.Provider
 
 /**
@@ -36,7 +37,10 @@ public interface SealantViewModelSubcomponent {
     public interface Factory {
 
         /**  */
-        public fun create(ssHandle: SavedStateHandle): SealantViewModelSubcomponent
+        public fun create(
+            ssHandle: SavedStateHandle,
+            vmLifecycle: ViewModelLifecycle,
+        ): SealantViewModelSubcomponent
     }
 
     /**

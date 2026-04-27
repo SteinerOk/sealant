@@ -16,15 +16,19 @@
 package dev.steinerok.sealant.viewmodel.compiler.ksp
 
 import com.google.auto.service.AutoService
+import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -115,6 +119,33 @@ public class ViewModelCreationSymbolProcessor(
     }
 
     private fun generateByProcessor(clazz: KSClassDeclaration): FileSpec? {
+        if (clazz.classKind != ClassKind.CLASS) {
+            logger.error(
+                message = "`@ContributesViewModel` is only applicable to classes.",
+                symbol = clazz
+            )
+            return null
+        }
+
+        val forbiddenModifiers = setOf(Modifier.PRIVATE, Modifier.INNER, Modifier.ABSTRACT)
+        val foundForbidden = clazz.modifiers.intersect(forbiddenModifiers)
+        if (foundForbidden.isNotEmpty()) {
+            val modifiersStr = foundForbidden.joinToString(" and ") { it.name.lowercase() }
+            logger.error(
+                message = "Class annotated with `@ContributesViewModel` cannot be $modifiersStr.",
+                symbol = clazz
+            )
+            return null
+        }
+
+        if (clazz.typeParameters.isNotEmpty()) {
+            logger.error(
+                message = "Class annotated with `@ContributesViewModel` cannot have type parameters (generics).",
+                symbol = clazz
+            )
+            return null
+        }
+
         if (!clazz.implements(ClassNames.androidxViewModel)) {
             logger.error(
                 message = "The annotation `@SealantViewModel` can only be applied " +
@@ -123,6 +154,94 @@ public class ViewModelCreationSymbolProcessor(
             )
             return null
         }
+
+        val hasScope = clazz.annotations.any { annotation ->
+            annotation.annotationType.resolve().declaration.annotations.any { meta ->
+                meta.shortName.asString() == "Scope"
+            }
+        }
+        if (hasScope) {
+            logger.error(
+                message = "ViewModel classes must not be scoped. The lifecycle is managed by Android.",
+                symbol = clazz
+            )
+            return null
+        }
+
+        val constructors = clazz.getConstructors().toList()
+        val injectConstructors = constructors.filter { constructors ->
+            constructors.annotations.any { annotation ->
+                annotation.shortName.asString() == ClassNames.inject.simpleName
+            }
+        }
+        val assistedConstructors = constructors.filter { constructors ->
+            constructors.annotations.any { annotation ->
+                annotation.shortName.asString() == ClassNames.assistedInject.simpleName
+            }
+        }
+
+        val totalInjectedConstructors = injectConstructors.size + assistedConstructors.size
+        if (totalInjectedConstructors == 0) {
+            logger.error(
+                message = "ViewModel must contain exactly one constructor annotated with `@Inject` or `@AssistedInject`.",
+                symbol = clazz
+            )
+            return null
+        }
+        if (totalInjectedConstructors > 1) {
+            logger.error(
+                message = "ViewModel cannot have multiple constructors annotated with `@Inject` or `@AssistedInject`.",
+                symbol = clazz
+            )
+            return null
+        }
+
+        val annotation = clazz.annotations.firstOrNull { annotation ->
+            annotation.shortName.asString() == ClassNames.contributesViewModel.simpleName
+        } ?: run {
+            logger.error("Missing `@ContributesViewModel` annotation.", clazz)
+            return null
+        }
+
+        val factoryKsType = annotation.arguments.firstOrNull { argument ->
+            argument.name?.asString() == "assistedFactory"
+        }?.value as? KSType
+        val factoryDecl = factoryKsType?.declaration as? KSClassDeclaration
+        val hasFactorySpecified = factoryDecl != null &&
+                factoryDecl.simpleName.asString() != ClassNames.nothing.simpleName
+        val isAssistedInject = assistedConstructors.isNotEmpty()
+
+        if (isAssistedInject) {
+            if (!hasFactorySpecified) {
+                logger.error(
+                    message = "ViewModel is annotated with `@AssistedInject` but did not specify an `assistedFactory` in `@ContributesViewModel`.",
+                    symbol = clazz
+                )
+                return null
+            }
+
+            val factoryHasAssistedFactoryAnnotation = factoryDecl.annotations.any { annotation ->
+                annotation.shortName.asString() == ClassNames.assistedFactory.simpleName
+            }
+
+            if (!factoryHasAssistedFactoryAnnotation) {
+                logger.error(
+                    message = "ViewModel's `assistedFactory` must be annotated with `@AssistedFactory`.",
+                    symbol = factoryDecl
+                )
+                return null
+            }
+        } else {
+            if (hasFactorySpecified) {
+                logger.error(
+                    message = "ViewModel is annotated with `@Inject` but specified an `assistedFactory` in `@ContributesViewModel`. Please remove it.",
+                    symbol = clazz
+                )
+                return null
+            }
+        }
+
+        val assistedFactoryClassName = if (isAssistedInject) factoryDecl?.toClassName() else null
 
         val origClassName = clazz.toClassName()
         val origShortName = origClassName.simpleName
@@ -137,8 +256,20 @@ public class ViewModelCreationSymbolProcessor(
             // Генерируем ViewModel Key Set Module
             addType(buildKeyModule(origClassName, origShortName, scopeClassName, fileNode))
 
-            // Генерируем ViewModel Binds Module
-            addType(buildBindsModule(origClassName, origShortName, vmScopeClassName, fileNode))
+            // BindsModule зависит от того, Assisted это или обычный Inject
+            if (isAssistedInject) {
+                addType(
+                    buildAssistedBindsModule(
+                        origClassName,
+                        origShortName,
+                        assistedFactoryClassName!!,
+                        vmScopeClassName,
+                        fileNode
+                    )
+                )
+            } else {
+                addType(buildBindsModule(origClassName, origShortName, vmScopeClassName, fileNode))
+            }
         }
     }
 
@@ -168,9 +299,8 @@ public class ViewModelCreationSymbolProcessor(
         fileNode: KSFile,
     ): TypeSpec {
         val kmNameStr = "${origShortName}_KeyModule"
-        val kmClassName = ClassName(origClassName.packageName, kmNameStr)
 
-        return ObjectSpec(kmClassName) {
+        return ObjectSpec(ClassName(origClassName.packageName, kmNameStr)) {
             addContributesToAnnotation(scopeClassName)
             addAnnotation(ClassNames.module)
 
@@ -212,9 +342,8 @@ public class ViewModelCreationSymbolProcessor(
         fileNode: KSFile,
     ): TypeSpec {
         val bmNameStr = "${origShortName}_BindsModule"
-        val bmClassName = ClassName(origClassName.packageName, bmNameStr)
 
-        return InterfaceSpec(bmClassName) {
+        return InterfaceSpec(ClassName(origClassName.packageName, bmNameStr)) {
             addContributesToAnnotation(vmScopeClassName)
             addAnnotation(ClassNames.module)
 
@@ -233,6 +362,57 @@ public class ViewModelCreationSymbolProcessor(
             addOriginatingKSFile(fileNode)
         }
     }
+
+    /**
+     * Generates the ViewModel Assisted Binds Module.
+     * * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. Unlike the
+     * standard binds module, this binds the user-defined `@AssistedFactory` interface
+     * (rather than the ViewModel instance itself) into the Multibinding Map as `Any`.
+     * * This allows the custom `ViewModelProvider.Factory` to retrieve the factory
+     * from the map (`@SealantViewModelAssistedMap`) at runtime, cast it to the correct type,
+     * and instantiate the ViewModel with the necessary dynamic arguments.
+     * * Output example:
+     * ```kotlin
+     * @Module
+     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * public interface <ViewModel>_AssistedBindsModule {
+     *   @Binds
+     *   @IntoMap
+     *   @ViewModelKey(<ViewModel>::class)
+     *   @SealantViewModelAssistedMap
+     *   public fun bindFactory(factory: <ViewModel>_AssistedFactory): Any
+     * }
+     * ```
+     */
+    private fun buildAssistedBindsModule(
+        origClassName: ClassName,
+        origShortName: String,
+        factoryClassName: ClassName,
+        vmScopeClassName: ClassName,
+        fileNode: KSFile,
+    ): TypeSpec {
+        val abmNameStr = "${origShortName}_AssistedBindsModule"
+
+        return InterfaceSpec(ClassName(origClassName.packageName, abmNameStr)) {
+            addContributesToAnnotation(vmScopeClassName)
+            addAnnotation(ClassNames.module)
+
+            addFunction(FunSpec("bindFactory") {
+                addAnnotation(ClassNames.binds)
+                addAnnotation(ClassNames.intoMap)
+                addAnnotation(AnnotationSpec(ClassNames.viewModelKey) {
+                    addMember("%T::class", origClassName)
+                })
+                addAnnotation(ClassNames.sealantViewModelAssistedMap)
+                addModifiers(KModifier.ABSTRACT)
+                addParameter(ParameterSpec("factory", factoryClassName))
+                returns(ClassNames.any)
+            })
+
+            addOriginatingKSFile(fileNode)
+        }
+    }
+
 
     /**
      * Entry point for KSP to pick up our [SymbolProcessor].

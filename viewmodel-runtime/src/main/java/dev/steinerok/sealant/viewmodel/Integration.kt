@@ -69,4 +69,8 @@ public interface ViewModelFactoriesOwner {
     /**  */
     @get:SealantViewModelMap
     public val vmProviderMap: Map<Class<out ViewModel>, @JvmSuppressWildcards Provider<ViewModel>>
+
+    /**  */
+    @get:SealantViewModelAssistedMap
+    public val vmAssistedMap: Map<Class<out ViewModel>, Any>
 }

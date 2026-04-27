@@ -31,7 +31,14 @@ import kotlin.reflect.KClass
 public annotation class ContributesViewModel(
 
     /** The scope from which to pull the annotated class's dependencies. */
-    val scope: KClass<out Any>
+    val scope: KClass<out Any>,
+
+    /**
+     * Returns a factory class that can be used to create this ViewModel with assisted injection.
+     * The default value `Nothing::class` denotes that no factory is specified and the ViewModel
+     * is not assisted injected.
+     */
+    val assistedFactory: KClass<*> = Nothing::class,
 )
 
 /**
@@ -43,7 +50,7 @@ public annotation class ContributesViewModel(
 public annotation class ContributesToViewModel(
 
     /** The scope from which to pull the annotated class's dependencies. */
-    val scope: KClass<out Any>
+    val scope: KClass<out Any>,
 )
 
 /**
@@ -63,11 +70,11 @@ public annotation class ContributesToViewModel(
 public annotation class ViewModelKey(
 
     /**
-     * The [ViewModel] class used as key.
+     * The [ViewModel] class used as a key.
      *
      * @return the class.
      */
-    val value: KClass<out ViewModel>
+    val value: KClass<out ViewModel>,
 )
 
 /**
@@ -83,6 +90,21 @@ public annotation class ViewModelKey(
     AnnotationTarget.VALUE_PARAMETER
 )
 public annotation class SealantViewModelMap
+
+/**
+ * Internal qualifier for the multibinding map of assisted factories for @AssistedInject-annotated
+ * ViewModels used by the [SealantViewModelFactory].
+ */
+@InternalSealantApi
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+@Target(
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.FIELD,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.VALUE_PARAMETER
+)
+public annotation class SealantViewModelAssistedMap
 
 
 /**

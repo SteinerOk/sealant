@@ -36,7 +36,7 @@ public class SealantViewModelFactory internal constructor(
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        return if (vmKeySet.contains(modelClass)) {
+        return if (modelClass in vmKeySet) {
             primaryFactory.create(modelClass, extras)
         } else {
             delegateFactory.create(modelClass, extras)
@@ -55,29 +55,67 @@ public class SealantViewModelFactory internal constructor(
             }
             val wmfOwner = requireNotNull(vmSubcomponentFactoryMap[scopeClass.name]) {
                 "Expected the Sealant Subcomponent factory class '${scopeClass.name}' to be " +
-                        "available in the multi-binding of @SealantViewModelMap.SubcomponentMap " +
+                        "available in the multi-binding of @SealantViewModelSupport.SubcomponentMap " +
                         "but none was found. Found only: ${vmSubcomponentFactoryMap.keys.toList()}"
             }.get().create(ssHandle = extras.createSavedStateHandle()) as ViewModelFactoriesOwner
+
+            val provider = wmfOwner.vmProviderMap[modelClass]
+            val creationCallback = extras[CREATION_CALLBACK_KEY]
+            val assistedFactory = wmfOwner.vmAssistedMap[modelClass]
+
             @Suppress("UNCHECKED_CAST")
-            return requireNotNull(wmfOwner.vmProviderMap[modelClass]) {
-                "Expected the @ContributesViewModel-annotated class '${modelClass.name}' to be " +
-                        "available in the multi-binding of @SealantViewModelMap but " +
-                        "none was found. Found only: ${wmfOwner.vmProviderMap.keys.toList()}"
-            }.get() as T
+            val viewModel = when {
+                provider != null && assistedFactory != null -> {
+                    throw AssertionError(
+                        "Found the @ContributesViewModel-annotated class ${modelClass.name} in both the " +
+                                "multi-bindings of @SealantViewModelMap and @SealantViewModelAssistedMap."
+                    )
+                }
+
+                assistedFactory != null -> {
+                    checkNotNull(creationCallback) {
+                        "Found @ContributesViewModel-annotated class ${modelClass.name} using " +
+                                "@AssistedInject but no creation callback was provided in CreationExtras."
+                    }
+                    creationCallback.invoke(assistedFactory) as T
+                }
+
+                provider != null -> {
+                    check(creationCallback == null) {
+                        "Found creation callback but class ${modelClass.name} " +
+                                "does not have an assisted factory specified in @ContributesViewModel."
+                    }
+                    provider.get() as T
+                }
+
+                else -> {
+                    throw IllegalStateException(
+                        "Expected the @ContributesViewModel-annotated class ${modelClass.name} " +
+                                "to be available in the multi-binding of @SealantViewModelMap but none was found."
+                    )
+                }
+            }
+
+            return viewModel
         }
     }
 
     public companion object {
 
+        /** Creation extra key for the callbacks that create @AssistedInject-annotated ViewModels. */
+        @JvmField
+        public val CREATION_CALLBACK_KEY: CreationExtras.Key<(Any) -> ViewModel> =
+            object : CreationExtras.Key<(Any) -> ViewModel> {}
+
         @OptIn(InternalSealantApi::class)
         @JvmStatic
         public fun createInternal(
             parent: SealantViewModelSubcomponent.Parent,
-            delegateFactory: ViewModelProvider.Factory
+            delegateFactory: ViewModelProvider.Factory,
         ): ViewModelProvider.Factory = SealantViewModelFactory(
             vmKeySet = parent.vmKeySet,
             delegateFactory = delegateFactory,
-            vmSubcomponentFactoryMap = parent.vmSubcomponentFactoryMap
+            vmSubcomponentFactoryMap = parent.vmSubcomponentFactoryMap,
         )
     }
 }

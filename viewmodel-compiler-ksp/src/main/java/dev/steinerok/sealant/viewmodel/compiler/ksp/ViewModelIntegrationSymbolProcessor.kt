@@ -392,6 +392,10 @@ public class ViewModelIntegrationSymbolProcessor(
      *     @Multibinds
      *     @SealantViewModelMap
      *     public fun bindWmMap(): Map<Class<out ViewModel>, ViewModel>
+     *
+     *     @Multibinds
+     *     @SealantViewModelAssistedMap
+     *     public fun bindWmAssistedMap(): Map<Class<out ViewModel>, Any>
      * }
      * ```
      */
@@ -412,6 +416,13 @@ public class ViewModelIntegrationSymbolProcessor(
                 addAnnotation(ClassNames.sealantViewModelMap)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.viewModelMap)
+            })
+
+            addFunction(FunSpec("bindWmAssistedMap") {
+                addAnnotation(ClassNames.multibinds)
+                addAnnotation(ClassNames.sealantViewModelAssistedMap)
+                addModifiers(KModifier.ABSTRACT)
+                returns(ClassNames.viewModelAssistedMap)
             })
 
             addOriginatingKSFile(fileNode)

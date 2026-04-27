@@ -46,11 +46,17 @@ internal val ClassNames.viewModelClassSet
 internal val ClassNames.viewModelMap
     get() = MAP.parameterizedBy(ClassNames.javaClazzOutViewModel, androidxViewModel)
 
+internal val ClassNames.viewModelAssistedMap
+    get() = MAP.parameterizedBy(ClassNames.javaClazzOutViewModel, any)
+
 internal val ClassNames.sealantViewModelScope
     get() = ClassName(componentPkg, "SealantViewModelScope")
 
 internal val ClassNames.sealantViewModelMap
     get() = ClassName(componentPkg, "SealantViewModelMap")
+
+internal val ClassNames.sealantViewModelAssistedMap
+    get() = ClassName(componentPkg, "SealantViewModelAssistedMap")
 
 internal val ClassNames.sealantViewModelSupport
     get() = ClassName(componentPkg, "SealantViewModelSupport")

@@ -26,6 +26,8 @@ import kotlin.reflect.KClass
 public object ClassNames {
     public val javaClazz: ClassName = Class::class.asClassName()
     public val kotlinClazz: ClassName = KClass::class.asClassName()
+    public val any: ClassName = Any::class.asClassName()
+    public val nothing: ClassName = Nothing::class.asClassName()
     public val optIn: ClassName = ClassName("kotlin", "OptIn")
 
     public val sealantConfiguration: ClassName = ClassName(

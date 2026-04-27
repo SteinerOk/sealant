@@ -20,7 +20,7 @@ Declare dependencies in `libs.versions.toml`:
 ```toml
 [versions]
 ksp = "2.3.7"
-sealant = "0.6.0-alpha16"
+sealant = "0.6.0-beta01"
 
 [libraries]
 sealant-diCommon = { module = "io.github.steinerok.sealant:di-common", version.ref = "sealant" }

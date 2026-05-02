@@ -52,7 +52,7 @@ kotlin = "2.3.21"
 ksp = "2.3.7"
 anvilKsp = "0.5.3"
 metro = "1.0.0"
-sealant = "0.6.0-beta02"
+sealant = "0.6.0-beta03"
 
 [libraries]
 anvilKsp-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvilKsp" }

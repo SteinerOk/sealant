@@ -12,8 +12,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 class AndroidLibraryConventionPlugin : Plugin<Project> {
 
     override fun apply(target: Project) = with(target) {
+        val builtInKotlin = providers
+            .gradleProperty("android.builtInKotlin")
+            .getOrElse("true").toBooleanStrict()
+
         with(pluginManager) {
-            apply(libs.plugins.kotlin.android.get().pluginId)
+            if (!builtInKotlin) {
+                apply(libs.plugins.kotlin.android.get().pluginId)
+            }
             apply(libs.plugins.android.library.get().pluginId)
         }
 

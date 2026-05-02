@@ -49,6 +49,7 @@ import dev.steinerok.sealant.compiler.ksp.implements
 import dev.steinerok.sealant.compiler.ksp.isAnnotationPresent
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates assisted-worker bindings for classes annotated with `@ContributesWorker`.
@@ -66,7 +67,7 @@ public class WorkerCreationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesWorker)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .filter { annotated ->

@@ -52,6 +52,7 @@ import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.implements
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates per-ViewModel bindings required by Sealant's custom `ViewModelProvider.Factory`.
@@ -104,7 +105,7 @@ public class ViewModelCreationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesViewModel)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .filter { it.scope().hasSealantFeatureForScope(SealantFeature.ViewModel) }

@@ -43,6 +43,7 @@ import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates wrapper modules for `@ContributesToViewModel` declarations.
@@ -60,7 +61,7 @@ public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesToViewModel)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .filter { annotated ->

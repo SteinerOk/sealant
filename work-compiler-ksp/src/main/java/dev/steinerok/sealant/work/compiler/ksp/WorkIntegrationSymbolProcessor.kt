@@ -47,6 +47,7 @@ import dev.steinerok.sealant.compiler.ksp.findScopesForSealantFeatureIntegration
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.parentScopeWithSealantFeature
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates the shared WorkManager integration for Sealant-enabled scopes.
@@ -64,7 +65,7 @@ public class WorkIntegrationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .flatMap { annotated ->

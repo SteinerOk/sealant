@@ -30,7 +30,7 @@ Sealant code generation runs on **Kotlin** sources only.
 
 ### Requirements
 
-`0.6.0-beta02` is built against:
+`0.6.0-beta03` is built against:
 
 * Kotlin `2.3.21`
 * KSP `2.3.7`

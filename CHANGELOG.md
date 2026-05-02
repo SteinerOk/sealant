@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 0.6.0-beta03
+
+_2026-05-02_
+
+* Improve documentation across the runtime APIs, KSP utilities, symbol processors, and README to
+  better explain the generated components and Sealant integration points.
+* Refactor symbol processor validation to use a shared predicate for AST node filtering and
+  improve KSP validation performance.
+
 ## Version 0.6.0-beta02
 
 _2026-04-28_

@@ -42,6 +42,7 @@ import dev.steinerok.sealant.compiler.ksp.SealantFileSpec
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Description of the ViewModel scope marker generation.
@@ -58,7 +59,7 @@ public class ChildScopesSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantConfiguration)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .forEach { symbol ->

@@ -49,6 +49,7 @@ import dev.steinerok.sealant.compiler.ksp.implements
 import dev.steinerok.sealant.compiler.ksp.requireAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates fragment multibinding entries for classes annotated with `@ContributesFragment`.
@@ -66,7 +67,7 @@ public class FragmentCreationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.contributesFragment)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .filter { annotated ->

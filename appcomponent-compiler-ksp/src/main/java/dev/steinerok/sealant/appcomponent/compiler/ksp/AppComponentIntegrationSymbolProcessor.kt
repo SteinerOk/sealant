@@ -43,6 +43,7 @@ import dev.steinerok.sealant.compiler.ksp.SealantFileSpec
 import dev.steinerok.sealant.compiler.ksp.findScopesForSealantFeatureIntegration
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates scope-level injector infrastructure for Sealant app-component integration.
@@ -60,7 +61,7 @@ public class AppComponentIntegrationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .flatMap { annotated ->

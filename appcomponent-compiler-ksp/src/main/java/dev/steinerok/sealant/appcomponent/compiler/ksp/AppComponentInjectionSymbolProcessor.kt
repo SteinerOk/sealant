@@ -54,6 +54,7 @@ import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.implements
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates member-injection bindings for Android framework entry points annotated with `@InjectWith`.
@@ -73,7 +74,7 @@ public class AppComponentInjectionSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.injectWith)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .filter { annotated ->

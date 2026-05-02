@@ -8,9 +8,13 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSName
+import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.symbol.KSTypeAlias
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueArgument
+import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -130,4 +134,44 @@ public inline fun <reified T, R> KSAnnotation.argumentOfTypeWithMapperAtOrNull(
 /** Returns a non-defaulted annotation argument by [name], or `null` when absent. */
 public fun KSAnnotation.argumentAtOrNull(name: String): KSValueArgument? {
     return arguments.find { it.name?.asString() == name }?.takeUnless { it.isDefault() }
+}
+
+/**
+ * Предикат для фильтрации узлов синтаксического дерева (AST) при валидации символов в KSP.
+ * Предназначен для использования в связке с функцией [KSNode.validate].
+ *
+ * Оптимизирует процесс проверки символов:
+ * 1. Игнорирует тела обычных методов, разрешая глубокий обход только для конструкторов.
+ * 2. Выполняет строгую проверку ссылок на типы (включая дженерик-аргументы первого уровня)
+ *    на наличие неразрешенных типов (`<ERROR TYPE>`).
+ *
+ * @param _ Родительский узел (parent). В данной реализации не используется.
+ * @param current Текущий узел (AST node), который обходит визитор KSP.
+ * @return `true`, если узел корректен и обход его дочерних элементов должен быть продолжен.
+ *         `false`, если обход этой ветки нужно остановить (например, для методов)
+ *         или если тип не удалось разрешить.
+ */
+public val simpleValidatePredicate: (_: KSNode?, current: KSNode) -> Boolean = { _, current ->
+    when (current) {
+        // Разрешаем обход только для конструкторов.
+        // Для обычных функций вернется false, и KSP не пойдет проверять их параметры
+        // и локальные переменные, что экономит ресурсы компилятора.
+        is KSFunctionDeclaration -> current.simpleName.asString() == "<init>"
+
+        // Валидируем ссылки на типы (например, типы параметров в конструкторе)
+        is KSTypeReference -> {
+            val resolvedType = current.resolve()
+
+            // Тип считается валидным, если:
+            // 1. Сам базовый тип успешно разрешен (не ошибка)
+            !resolvedType.isError &&
+                    // 2. И ни один из его дженерик-аргументов не является ошибкой.
+                    // Конструкция `?.` и `== true` безопасно обрабатывает star-projections (например, List<*>).
+                    resolvedType.arguments.none { arg -> arg.type?.resolve()?.isError == true }
+        }
+
+        // Для всех остальных узлов (KSClassDeclaration, KSValueParameter и т.д.)
+        // пропускаем визитор дальше, чтобы он мог добраться до их типов.
+        else -> true
+    }
 }

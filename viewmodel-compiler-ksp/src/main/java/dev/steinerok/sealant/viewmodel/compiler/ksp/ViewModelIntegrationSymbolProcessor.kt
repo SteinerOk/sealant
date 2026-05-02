@@ -48,6 +48,7 @@ import dev.steinerok.sealant.compiler.ksp.SealantOptions
 import dev.steinerok.sealant.compiler.ksp.findScopesForSealantFeatureIntegration
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
+import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 
 /**
  * Generates the shared subcomponent and factory infrastructure behind Sealant ViewModel support.
@@ -67,7 +68,7 @@ public class ViewModelIntegrationSymbolProcessor(
         val (validSymbols, invalidSymbols) = resolver
             .getSymbolsWithAnnotation(ClassNames.sealantIntegration)
             .filterIsInstance<KSClassDeclaration>()
-            .partition { symbol -> symbol.validate() }
+            .partition { symbol -> symbol.validate(simpleValidatePredicate) }
 
         validSymbols
             .flatMap { annotated ->

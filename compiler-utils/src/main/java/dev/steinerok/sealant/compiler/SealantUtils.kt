@@ -35,4 +35,4 @@ public sealed class SealantFeature(public val name: String, public val index: In
  *
  */
 public fun buildVmScopeClassName(origScopeClassName: ClassName): ClassName =
-    ClassName(origScopeClassName.packageName, "ViewModel_${origScopeClassName.simpleName}")
+    ClassName(origScopeClassName.packageName, "${origScopeClassName.simpleName}_ViewModel")

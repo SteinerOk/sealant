@@ -99,8 +99,6 @@ public class ViewModelIntegrationSymbolProcessor(
         val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
         val vmsNameStr = "${scopeClassNameStr}_$vmsSnStr"
         val vmsClassName = ClassName(integrationPkg, vmsNameStr)
-        val mvmsNameStr = if (sealantOptions.useMetroInterop) vmsNameStr else "Merged$vmsNameStr"
-        val mvmsClassName = ClassName(integrationPkg, mvmsNameStr)
 
         val fileNode = clazz.requireContainingFile()
         val fileName = "${scopeClassNameStr}_${featureName}_Integration"
@@ -113,12 +111,12 @@ public class ViewModelIntegrationSymbolProcessor(
             )
             addType(
                 buildMainIntegrativeModule(
-                    scopeClassNameStr, scopeClassName, mvmsClassName, fileNode
+                    scopeClassNameStr, scopeClassName, vmsClassName, fileNode
                 )
             )
             addType(
                 buildSubcomponentBindsModule(
-                    scopeClassNameStr, scopeClassName, mvmsClassName, fileNode
+                    scopeClassNameStr, scopeClassName, vmsClassName, fileNode
                 )
             )
 
@@ -134,17 +132,17 @@ public class ViewModelIntegrationSymbolProcessor(
 
 
     /**
-     * Creates an Anvil `@MergeSubcomponent` tied to `ViewModel_<Scope>`. This acts as an
-     * isolated dependency graph specifically for ViewModels. The `@Subcomponent.Factory`
+     * Creates an Anvil `@ContributesSubcomponent` tied to `<Scope>_ViewModel`. This acts as an
+     * isolated dependency graph specifically for ViewModels. The `@ContributesSubcomponent.Factory`
      * forces the provision of a `SavedStateHandle` via `@BindsInstance`.
      * * * Output example:
      * ```kotlin
      * @SingleIn(SealantViewModelScope::class)
-     * @MergeSubcomponent(scope = ViewModel_<Scope>::class)
+     * @ContributesSubcomponent(scope = <Scope>_ViewModel::class, parentScope = <Scope>::class)
      * public interface <Scope>_SealantViewModelSubcomponent : SealantViewModelSubcomponent {
      *
      *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in metro interop mode
-     *     @Subcomponent.Factory
+     *     @ContributesSubcomponent.Factory
      *     public interface Factory : SealantViewModelSubcomponent.Factory {
      *         public override fun create(
      *             @BindsInstance ssHandle: SavedStateHandle,
@@ -168,14 +166,15 @@ public class ViewModelIntegrationSymbolProcessor(
             addAnnotation(AnnotationSpec(ClassNames.singleIn) {
                 addMember("scope = %T::class", ClassNames.sealantViewModelScope)
             })
-            addAnnotation(AnnotationSpec(ClassNames.mergeSubcomponent) {
+            addAnnotation(AnnotationSpec(ClassNames.contributesSubcomponent) {
                 addMember("scope = %T::class", vmScopeClassName)
+                addMember("parentScope = %T::class", scopeClassName)
             })
 
             addType(InterfaceSpec("Factory") {
                 addSuperinterface(ClassNames.sealantViewModelSubcomponentFactory)
                 if (sealantOptions.useMetroInterop) addContributesToAnnotation(scopeClassName)
-                addAnnotation(ClassNames.mergeSubcomponentFactory)
+                addAnnotation(ClassNames.contributesSubcomponentFactory)
                 addFunction(FunSpec("create") {
                     addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
                     addParameter(ParameterSpec("ssHandle", ClassNames.androidxSsHandle) {
@@ -207,7 +206,7 @@ public class ViewModelIntegrationSymbolProcessor(
      * classes (`KeySet`), and another for aggregating subcomponent factories.
      * * * Output example:
      * ```kotlin
-     * @Module(subcomponents = [<Scope>_SealantViewModelSubcomponent::class])
+     * @Module
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Scope>_SealantViewModelSubcomponent_IntegrativeModule {
      *
@@ -224,7 +223,7 @@ public class ViewModelIntegrationSymbolProcessor(
     private fun buildMainIntegrativeModule(
         scopeClassNameStr: String,
         scopeClassName: ClassName,
-        mvmsClassName: ClassName,
+        vmsClassName: ClassName,
         fileNode: KSFile
     ): TypeSpec {
         val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
@@ -233,9 +232,7 @@ public class ViewModelIntegrationSymbolProcessor(
 
         return InterfaceSpec(imClassName) {
             addContributesToAnnotation(scopeClassName)
-            addAnnotation(AnnotationSpec(ClassNames.module) {
-                addMember("subcomponents = [%T::class]", mvmsClassName)
-            })
+            addAnnotation(ClassNames.module)
 
             addFunction(FunSpec("bindVmClassSet") {
                 addAnnotation(ClassNames.multibinds)
@@ -275,7 +272,7 @@ public class ViewModelIntegrationSymbolProcessor(
     private fun buildSubcomponentBindsModule(
         scopeClassNameStr: String,
         scopeClassName: ClassName,
-        mvmsClassName: ClassName,
+        vmsClassName: ClassName,
         fileNode: KSFile,
     ): TypeSpec {
         val vmsSnStr = ClassNames.sealantViewModelSubcomponent.simpleName
@@ -294,7 +291,7 @@ public class ViewModelIntegrationSymbolProcessor(
                 })
                 addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
                 addModifiers(KModifier.ABSTRACT)
-                addParameter(ParameterSpec("instance", mvmsClassName.nestedClass("Factory")))
+                addParameter(ParameterSpec("instance", vmsClassName.nestedClass("Factory")))
                 returns(ClassNames.sealantViewModelSubcomponentFactory)
             })
 
@@ -388,12 +385,12 @@ public class ViewModelIntegrationSymbolProcessor(
     }
 
     /**
-     * Contributes to the `ViewModel_<Scope>`. It defines the Multibinding map where all
+     * Contributes to the `<Scope>_ViewModel`. It defines the Multibinding map where all
      * the actual `ViewModel` instances will be bound (using the `@SealantViewModelMap` qualifier).
      * * * Output example:
      * ```kotlin
      * @Module
-     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <Scope>_ViewModelFactories_IntegrativeModule {
      *
      *     @Multibinds
@@ -437,12 +434,12 @@ public class ViewModelIntegrationSymbolProcessor(
     }
 
     /**
-     * Contributes to the `ViewModel_<Scope>`. This ensures the subcomponent officially exposes
+     * Contributes to the `<Scope>_ViewModel`. This ensures the subcomponent officially exposes
      * the fully constructed `ViewModelFactories`, allowing the Android framework to finally
      * retrieve the instantiated ViewModels.
      * * * Output example:
      * ```kotlin
-     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <Scope>_ViewModelFactoriesOwner : ViewModelFactoriesOwner
      * ```
      */

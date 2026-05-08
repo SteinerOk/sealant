@@ -95,7 +95,7 @@ public class ChildScopesSymbolProcessor(
      * with the target `<Scope>`.
      * * Output example:
      * ```kotlin
-     * public abstract class ViewModel_<Scope> private constructor()
+     * public abstract class <Scope>_ViewModel private constructor()
      * ```
      */
     private fun buildVmScopeMarkerClass(

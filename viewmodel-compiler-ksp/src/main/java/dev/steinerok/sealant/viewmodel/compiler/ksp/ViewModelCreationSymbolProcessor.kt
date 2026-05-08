@@ -319,14 +319,14 @@ public class ViewModelCreationSymbolProcessor(
 
     /**
      * Generates the ViewModel Binds Module.
-     * * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. It binds
+     * * Contributes directly to the sub-scope `<Scope>_ViewModel::class`. It binds
      * the concrete `<ViewModel>` instance to the base `ViewModel` type inside a
      * Multibinding Map. This map (`@SealantViewModelMap`) is then injected into
      * the custom factory to resolve and create the correct ViewModel instance at runtime.
      * * Output example:
      * ```kotlin
      * @Module
-     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <ViewModel>_BindsModule {
      *   @Binds
      *   @IntoMap
@@ -366,7 +366,7 @@ public class ViewModelCreationSymbolProcessor(
 
     /**
      * Generates the ViewModel Assisted Binds Module.
-     * * Contributes directly to the sub-scope `ViewModel_<Scope>::class`. Unlike the
+     * * Contributes directly to the sub-scope `<Scope>_ViewModel::class`. Unlike the
      * standard binds module, this binds the user-defined `@AssistedFactory` interface
      * (rather than the ViewModel instance itself) into the Multibinding Map as `Any`.
      * * This allows the custom `ViewModelProvider.Factory` to retrieve the factory
@@ -375,7 +375,7 @@ public class ViewModelCreationSymbolProcessor(
      * * Output example:
      * ```kotlin
      * @Module
-     * @ContributesTo(scope = ViewModel_<Scope>::class)
+     * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <ViewModel>_AssistedBindsModule {
      *   @Binds
      *   @IntoMap

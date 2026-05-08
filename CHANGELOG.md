@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 0.6.0-beta04
+
+_2026-05-08_
+
+* Refactor generated ViewModel integration to use the `<Scope>_ViewModel` naming convention
+  consistently across symbol processors and generated components.
+* Upgrade Anvil KSP to `0.5.4`, KotlinX Coroutines to `1.11.0`, and the Android Gradle Plugin
+  to `9.2.1`.
+
 ## Version 0.6.0-beta03
 
 _2026-05-02_

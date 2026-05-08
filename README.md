@@ -30,11 +30,11 @@ Sealant code generation runs on **Kotlin** sources only.
 
 ### Requirements
 
-`0.6.0-beta03` is built against:
+`0.6.0-beta04` is built against:
 
 * Kotlin `2.3.21`
 * KSP `2.3.7`
-* Anvil-KSP `0.5.3`
+* Anvil-KSP `0.5.4`
 
 Make sure `mavenCentral()` is available in your repositories:
 
@@ -52,7 +52,7 @@ kotlin = "2.3.21"
 ksp = "2.3.7"
 anvilKsp = "0.5.4"
 metro = "1.0.0"
-sealant = "0.6.0-beta03"
+sealant = "0.6.0-beta04"
 
 [libraries]
 anvilKsp-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvilKsp" }

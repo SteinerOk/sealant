@@ -50,7 +50,7 @@ repositories {
 [versions]
 kotlin = "2.3.21"
 ksp = "2.3.7"
-anvilKsp = "0.5.3"
+anvilKsp = "0.5.4"
 metro = "1.0.0"
 sealant = "0.6.0-beta03"
 

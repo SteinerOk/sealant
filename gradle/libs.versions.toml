@@ -27,7 +27,7 @@ timber = "5.0.1"
 # Dependency Injection
 dagger = "2.59.2"
 anvilKsp = "0.5.4"
-metro = "1.0.0"
+metro = "1.1.1"
 # Tools
 kotlinpoet = "2.3.0"
 auto-service = "1.1.1"

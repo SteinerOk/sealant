@@ -1,7 +1,7 @@
 [versions]
 # Language, plugins and tools, mobile-services independent
-kotlin = "2.3.21"
-ksp = "2.3.8"
+kotlin = "2.4.0"
+ksp = "2.3.9"
 androidPlugin = "9.2.1"
 versionsPlugin = "0.54.0"
 spotlessPlugin = "8.5.1"

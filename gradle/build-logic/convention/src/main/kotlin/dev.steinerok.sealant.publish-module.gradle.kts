@@ -8,7 +8,7 @@ publishing {
             name = "CustomLocal"
             val releasesRepoUrl = "${project.rootDir}/repos/releases"
             val snapshotsRepoUrl = "${project.rootDir}/repos/snapshots"
-            val isSnapshot: Boolean by rootProject.extra
+            val isSnapshot = rootProject.extra["isSnapshot"] as Boolean
             url = uri(if (isSnapshot) snapshotsRepoUrl else releasesRepoUrl)
         }
         maven {

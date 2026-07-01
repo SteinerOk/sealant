@@ -3,6 +3,4 @@ allprojects {
     version = property("VERSION_NAME") as String
 }
 
-val isSnapshot by extra {
-    version.toString().endsWith("-SNAPSHOT")
-}
+extra["isSnapshot"] = version.toString().endsWith("-SNAPSHOT")

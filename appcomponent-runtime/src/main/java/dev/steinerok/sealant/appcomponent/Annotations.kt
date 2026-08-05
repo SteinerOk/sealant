@@ -19,7 +19,7 @@ import android.app.Activity
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.ContentProvider
-import dagger.MapKey
+import dev.zacsweers.metro.MapKey
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 import kotlin.reflect.KClass
 
@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
  *
  * Example:
  * ```kotlin
- * @InjectWith(SomeAnvilScope::class)
+ * @InjectWith(SomeScope::class)
  * class MainActivity : ComponentActivity {
  *     @Inject lateinit var dependency: SomeDependency
  * }
@@ -49,7 +49,7 @@ public annotation class InjectWith(
 
 /** Internal [MapKey] used for activity injector multibindings. */
 @InternalSealantApi
-@MapKey
+@MapKey(implicitClassKey = true)
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
@@ -59,12 +59,12 @@ public annotation class InjectWith(
 public annotation class ActivityKey(
 
     /** Activity class used as the multibinding key. */
-    val value: KClass<out Activity>,
+    val value: KClass<out Activity> = Nothing::class,
 )
 
 /** Internal [MapKey] used for broadcast receiver injector multibindings. */
 @InternalSealantApi
-@MapKey
+@MapKey(implicitClassKey = true)
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
@@ -74,12 +74,12 @@ public annotation class ActivityKey(
 public annotation class BroadcastReceiverKey(
 
     /** BroadcastReceiver class used as the multibinding key. */
-    val value: KClass<out BroadcastReceiver>,
+    val value: KClass<out BroadcastReceiver> = Nothing::class,
 )
 
 /** Internal [MapKey] used for content provider injector multibindings. */
 @InternalSealantApi
-@MapKey
+@MapKey(implicitClassKey = true)
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
@@ -89,12 +89,12 @@ public annotation class BroadcastReceiverKey(
 public annotation class ContentProviderKey(
 
     /** ContentProvider class used as the multibinding key. */
-    val value: KClass<out ContentProvider>,
+    val value: KClass<out ContentProvider> = Nothing::class,
 )
 
 /** Internal [MapKey] used for service injector multibindings. */
 @InternalSealantApi
-@MapKey
+@MapKey(implicitClassKey = true)
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
@@ -104,5 +104,5 @@ public annotation class ContentProviderKey(
 public annotation class ServiceKey(
 
     /** Service class used as the multibinding key. */
-    val value: KClass<out Service>,
+    val value: KClass<out Service> = Nothing::class,
 )

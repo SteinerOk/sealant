@@ -34,6 +34,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import dev.steinerok.sealant.compiler.ClassNames
+import dev.steinerok.sealant.compiler.AnnotationSpec
 import dev.steinerok.sealant.compiler.FunSpec
 import dev.steinerok.sealant.compiler.InterfaceSpec
 import dev.steinerok.sealant.compiler.SealantFeature
@@ -101,25 +102,25 @@ public class AppComponentIntegrationSymbolProcessor(
 
     /**
      * Generates the Integrative Multibinds Module.
-     * * Declares Dagger multibinding maps for standard Android components (Activities,
+     * * Declares Metro multibinding maps for standard Android components (Activities,
      * BroadcastReceivers, ContentProviders, and Services). Using `@Multibinds` ensures
-     * that the Dagger graph compiles successfully even if some of these maps are currently
+     * that the Metro graph compiles successfully even if some of these maps are currently
      * empty (i.e., no specific bindings have been contributed to them yet).
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Scope>_SealantAppcomponent_IntegrativeModule {
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     public fun activityInjectors(): SealantActivityInjectorsMap
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     public fun broadcastReceiverInjectors(): BroadcastReceiverInjectorsMap
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     public fun contentProviderInjectors(): SealantContentProviderInjectorsMap
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     public fun serviceInjectors(): SealantServiceInjectorsMap
      * }
      * ```
@@ -133,26 +134,34 @@ public class AppComponentIntegrationSymbolProcessor(
         val imClassName = ClassName(integrationPkg, imNameStr)
 
         return InterfaceSpec(imClassName) {
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
             addContributesToAnnotation(scopeClassName)
 
             addFunction(FunSpec("activityInjectors") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.sealantActivityInjectorsMap)
             })
             addFunction(FunSpec("broadcastReceiverInjectors") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.sealantBroadcastReceiverInjectorsMap)
             })
             addFunction(FunSpec("contentProviderInjectors") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.sealantContentProviderInjectorsMap)
             })
             addFunction(FunSpec("serviceInjectors") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.sealantServiceInjectorsMap)
             })

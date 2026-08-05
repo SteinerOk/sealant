@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 /**
  * Resolves the generated injector maps for a concrete scope and runtime Android instance.
  *
- * The resolver usually looks up an owning Dagger/Anvil component for the supplied scope and
+ * The resolver usually looks up an owning Metro graph for the supplied scope and
  * returns its [SealantInjectorsOwner] view.
  */
 public typealias InjectorsResolver = (scope: KClass<out Any>, injectable: Any) -> SealantInjectorsOwner
@@ -45,7 +45,7 @@ public fun injectViaSealant(
     val injectorsMap = injectable.getInjectorsMap(injectorsOwner)
 
     @Suppress("UNCHECKED_CAST")
-    val injector = requireNotNull(injectorsMap[injectable.javaClass]) {
+    val injector = requireNotNull(injectorsMap[injectable::class]) {
         "Returned injector is null for injectable: $injectable with scope: ${injectWith.scope}"
     } as SealantInjector<Any>
 

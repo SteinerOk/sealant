@@ -9,8 +9,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.anvilKsp.annotations.optional)
-
     api(projects.sealant.coreRuntime)
 
     implementation(libs.androidx.activity)

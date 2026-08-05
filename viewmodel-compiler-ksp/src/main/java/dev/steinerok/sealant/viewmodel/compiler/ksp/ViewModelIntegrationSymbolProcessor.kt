@@ -62,6 +62,7 @@ public class ViewModelIntegrationSymbolProcessor(
     private val logger: KSPLogger,
 ) : SymbolProcessor {
 
+    @Suppress("unused")
     private val sealantOptions = SealantOptions.load(options, logger)
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -119,10 +120,7 @@ public class ViewModelIntegrationSymbolProcessor(
                     scopeClassNameStr, scopeClassName, vmsClassName, fileNode
                 )
             )
-
-            if (sealantOptions.useMetroInterop) {
-                addType(buildCreatorProvidesModule(scopeClassNameStr, scopeClassName, fileNode))
-            }
+            addType(buildCreatorProvidesModule(scopeClassNameStr, scopeClassName, fileNode))
 
             addType(buildCreatorOwnerInterface(scopeClassNameStr, scopeClassName, fileNode))
             addType(buildVmScopeIntegrativeModule(scopeClassNameStr, vmScopeClassName, fileNode))
@@ -132,21 +130,22 @@ public class ViewModelIntegrationSymbolProcessor(
 
 
     /**
-     * Creates an Anvil `@ContributesSubcomponent` tied to `<Scope>_ViewModel`. This acts as an
-     * isolated dependency graph specifically for ViewModels. The `@ContributesSubcomponent.Factory`
-     * forces the provision of a `SavedStateHandle` via `@BindsInstance`.
+     * Creates a Metro `@GraphExtension` tied to `<Scope>_ViewModel`. This acts as an
+     * isolated dependency graph specifically for ViewModels. The `@GraphExtension.Factory`
+     * forces the provision of a `SavedStateHandle` and a `ViewModelLifecycle` via `@Provides`
+     * factory parameters.
      * * * Output example:
      * ```kotlin
      * @SingleIn(SealantViewModelScope::class)
-     * @ContributesSubcomponent(scope = <Scope>_ViewModel::class, parentScope = <Scope>::class)
+     * @GraphExtension(scope = <Scope>_ViewModel::class)
      * public interface <Scope>_SealantViewModelSubcomponent : SealantViewModelSubcomponent {
      *
-     *     @ContributesTo(scope = <Scope>::class)   // NOTE: Only in metro interop mode
-     *     @ContributesSubcomponent.Factory
+     *     @ContributesTo(scope = <Scope>::class)
+     *     @GraphExtension.Factory
      *     public interface Factory : SealantViewModelSubcomponent.Factory {
      *         public override fun create(
-     *             @BindsInstance ssHandle: SavedStateHandle,
-     *             @BindsInstance vmLifecycle: ViewModelLifecycle,
+     *             @Provides ssHandle: SavedStateHandle,
+     *             @Provides vmLifecycle: ViewModelLifecycle,
      *         ): <Scope>_SealantViewModelSubcomponent
      *     }
      *
@@ -166,22 +165,21 @@ public class ViewModelIntegrationSymbolProcessor(
             addAnnotation(AnnotationSpec(ClassNames.singleIn) {
                 addMember("scope = %T::class", ClassNames.sealantViewModelScope)
             })
-            addAnnotation(AnnotationSpec(ClassNames.contributesSubcomponent) {
+            addAnnotation(AnnotationSpec(ClassNames.graphExtension) {
                 addMember("scope = %T::class", vmScopeClassName)
-                addMember("parentScope = %T::class", scopeClassName)
             })
 
             addType(InterfaceSpec("Factory") {
                 addSuperinterface(ClassNames.sealantViewModelSubcomponentFactory)
-                if (sealantOptions.useMetroInterop) addContributesToAnnotation(scopeClassName)
-                addAnnotation(ClassNames.contributesSubcomponentFactory)
+                addContributesToAnnotation(scopeClassName)
+                addAnnotation(ClassNames.graphExtensionFactory)
                 addFunction(FunSpec("create") {
                     addModifiers(KModifier.ABSTRACT, KModifier.OVERRIDE)
                     addParameter(ParameterSpec("ssHandle", ClassNames.androidxSsHandle) {
-                        addAnnotation(ClassNames.bindsInstance)
+                        addAnnotation(ClassNames.provides)
                     })
                     addParameter(ParameterSpec("vmLifecycle", ClassNames.viewModelLifecycle) {
-                        addAnnotation(ClassNames.bindsInstance)
+                        addAnnotation(ClassNames.provides)
                     })
                     returns(vmsClassName)
                 })
@@ -206,17 +204,17 @@ public class ViewModelIntegrationSymbolProcessor(
      * classes (`KeySet`), and another for aggregating subcomponent factories.
      * * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Scope>_SealantViewModelSubcomponent_IntegrativeModule {
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     @SealantViewModelMap.KeySet
-     *     public fun bindVmClassSet(): Set<Class<out ViewModel>>
+     *     public fun bindVmClassSet(): Set<KClass<out ViewModel>>
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     @SealantViewModelSupport.SubcomponentMap
-     *     public fun bindVmSubcomponentFactoryMap(): Map<String, SealantViewModelSubcomponent.Factory>
+     *     public fun bindVmSubcomponentFactoryMap(): Map<KClass<out Any>, SealantViewModelSubcomponent.Factory>
      * }
      * ```
      */
@@ -232,17 +230,21 @@ public class ViewModelIntegrationSymbolProcessor(
 
         return InterfaceSpec(imClassName) {
             addContributesToAnnotation(scopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("bindVmClassSet") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addAnnotation(ClassNames.sealantViewModelSupportKeySet)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.viewModelClassSet)
             })
 
             addFunction(FunSpec("bindVmSubcomponentFactoryMap") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.sealantViewModelSubcomponentFactoryMap)
@@ -257,13 +259,13 @@ public class ViewModelIntegrationSymbolProcessor(
      * Factory into the multibinding map defined above, using the scope's package string as a key.
      * * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Scope>_SealantViewModelSubcomponent_BindsModule {
      *
      *     @Binds
      *     @IntoMap
-     *     @StringKey("scope_pkg.<Scope>")
+     *     @SealantViewModelScopeKey(<Scope>::class)
      *     @SealantViewModelSupport.SubcomponentMap
      *     public fun bind(instance: <Scope>_SealantViewModelSubcomponent.Factory): SealantViewModelSubcomponent.Factory
      * }
@@ -281,13 +283,13 @@ public class ViewModelIntegrationSymbolProcessor(
 
         return InterfaceSpec(bmClassName) {
             addContributesToAnnotation(scopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("bind") {
                 addAnnotation(ClassNames.binds)
                 addAnnotation(ClassNames.intoMap)
-                addAnnotation(AnnotationSpec(ClassNames.stringKey) {
-                    addMember("%S", scopeClassName.reflectionName().replace("..", "."))
+                addAnnotation(AnnotationSpec(ClassNames.sealantViewModelScopeKey) {
+                    addMember("%T::class", scopeClassName)
                 })
                 addAnnotation(ClassNames.sealantViewModelSupportSubcomponentMap)
                 addModifiers(KModifier.ABSTRACT)
@@ -300,20 +302,19 @@ public class ViewModelIntegrationSymbolProcessor(
     }
 
     /**
-     * Only used in metro interop mode.
      * Contributes a singleton object module to the `<Scope>`. It provides the
      * `SealantViewModelFactoryCreator` as a scoped instance (`@SingleIn`).
      * * * Output example:
      * ```kotlin
      * @ContributesTo(scope = AppScope::class)
-     * @Module
+     * @BindingContainer
      * public object AppScope_SealantViewModelSubcomponent_ProvidesModule {
      *     @Provides
      *     @SingleIn(AppScope::class)
      *     public fun provideCreator(
      *         application: Application,
-     *         @SealantViewModelSupport.KeySet vmKeySet: Set<Class<out ViewModel>>,
-     *         @SealantViewModelSupport.SubcomponentMap vmSubcomponentFactoryMap: Map<String, Provider<SealantViewModelSubcomponent.Factory>>
+     *         @SealantViewModelSupport.KeySet vmKeySet: Set<KClass<out ViewModel>>,
+     *         @SealantViewModelSupport.SubcomponentMap vmSubcomponentFactoryMap: Map<KClass<out Any>, () -> SealantViewModelSubcomponent.Factory>
      *     ): SealantViewModelFactoryCreator = SealantViewModelFactoryCreator(application, vmKeySet, vmSubcomponentFactoryMap)
      * }
      * ```
@@ -329,7 +330,7 @@ public class ViewModelIntegrationSymbolProcessor(
 
         return ObjectSpec(pmClassName) {
             addContributesToAnnotation(scopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("provideCreator") {
                 addAnnotation(ClassNames.provides)
@@ -389,17 +390,17 @@ public class ViewModelIntegrationSymbolProcessor(
      * the actual `ViewModel` instances will be bound (using the `@SealantViewModelMap` qualifier).
      * * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <Scope>_ViewModelFactories_IntegrativeModule {
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     @SealantViewModelMap
-     *     public fun bindWmMap(): Map<Class<out ViewModel>, ViewModel>
+     *     public fun bindWmMap(): Map<KClass<out ViewModel>, ViewModel>
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     @SealantViewModelAssistedMap
-     *     public fun bindWmAssistedMap(): Map<Class<out ViewModel>, Any>
+     *     public fun bindWmAssistedMap(): Map<KClass<out ViewModel>, Any>
      * }
      * ```
      */
@@ -413,17 +414,21 @@ public class ViewModelIntegrationSymbolProcessor(
 
         return InterfaceSpec(vmfimClassName) {
             addContributesToAnnotation(vmScopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("bindWmMap") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addAnnotation(ClassNames.sealantViewModelMap)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.viewModelMap)
             })
 
             addFunction(FunSpec("bindWmAssistedMap") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addAnnotation(ClassNames.sealantViewModelAssistedMap)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.viewModelAssistedMap)

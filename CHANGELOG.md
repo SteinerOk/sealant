@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 0.7.0-beta01
+
+* **Breaking:** Sealant is now Metro-only. The Dagger/Anvil generation path, `sample/anvil`,
+  `sample/metro-experiment`, and the `sealant.codegen.mode=metroInterop` option have been removed.
+  All generated bindings target `dev.zacsweers.metro.*` annotations, and the `metro` Gradle plugin
+  is required in every module consuming Sealant-generated code.
+* Runtime multibinding maps now use `KClass` keys (`Map<KClass<out T>, V>`) instead of `Class`
+  keys, matching Metro's `@MapKey` semantics.
+* Scoped child graphs are generated as Metro `@GraphExtension`s with contributed
+  `@GraphExtension.Factory` types instead of Dagger subcomponents.
+
 ## Version 0.6.0-beta04
 
 _2026-05-08_

@@ -20,16 +20,15 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import dev.steinerok.sealant.core.internal.InternalSealantApi
-import javax.inject.Provider
 
 @OptIn(InternalSealantApi::class)
-private typealias WorkerAssistedFactoryProviderMap = Map<String, @JvmSuppressWildcards Provider<WorkerAssistedFactory<out ListenableWorker>>>
+private typealias WorkerAssistedFactoryProviderMap = Map<String, () -> WorkerAssistedFactory<out ListenableWorker>>
 
 /**
  * WorkManager [WorkerFactory] backed by Sealant's assisted worker multibindings.
  *
  * WorkManager asks this factory to create a worker by class name. Sealant resolves the matching
- * assisted factory from the Dagger map and delegates construction to it.
+ * assisted factory from the Metro map and delegates construction to it.
  */
 public class SealantWorkerFactory @InternalSealantApi constructor(
     private val wafProviderMap: WorkerAssistedFactoryProviderMap,
@@ -42,7 +41,7 @@ public class SealantWorkerFactory @InternalSealantApi constructor(
         workerParameters: WorkerParameters
     ): ListenableWorker? {
         val wafProvider = wafProviderMap[workerClassName] ?: return null
-        return wafProvider.get().create(appContext, workerParameters)
+        return wafProvider().create(appContext, workerParameters)
     }
 
     /** Exposes a configured [SealantWorkerFactory] from the owning component. */

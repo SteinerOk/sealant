@@ -21,7 +21,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 import dev.steinerok.sealant.viewmodel.lifecycle.RetainedLifecycleImpl
-import javax.inject.Provider
+import kotlin.reflect.KClass
 
 /**
  * [ViewModelProvider.Factory] implementation that understands Sealant-generated ViewModel graphs.
@@ -32,16 +32,16 @@ import javax.inject.Provider
  * to [delegateFactory].
  */
 public class SealantViewModelFactory internal constructor(
-    private val vmKeySet: Set<Class<out ViewModel>>,
+    private val vmKeySet: Set<KClass<out ViewModel>>,
     private val delegateFactory: ViewModelProvider.Factory,
-    private val vmSubcomponentFactoryMap: Map<String, Provider<SealantViewModelSubcomponent.Factory>>,
+    private val vmSubcomponentFactoryMap: Map<KClass<out Any>, () -> SealantViewModelSubcomponent.Factory>,
 ) : ViewModelProvider.Factory {
 
     private val primaryFactory by lazy(LazyThreadSafetyMode.NONE) {
         SealantSavedStateViewModelFactory()
     }
 
-    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+    override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
         return if (modelClass in vmKeySet) {
             primaryFactory.create(modelClass, extras)
         } else {
@@ -52,21 +52,21 @@ public class SealantViewModelFactory internal constructor(
     private inner class SealantSavedStateViewModelFactory : ViewModelProvider.Factory {
 
         @OptIn(InternalSealantApi::class)
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+        override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
             val scopeClass = requireNotNull(
-                modelClass.getAnnotation(ContributesViewModel::class.java)?.scope?.java
+                modelClass.java.getAnnotation(ContributesViewModel::class.java)?.scope
             ) {
-                "Expected the @ContributesViewModel-annotated class '${modelClass.name}' " +
+                "Expected the @ContributesViewModel-annotated class '${modelClass.qualifiedName}' " +
                         "but required annotation was not found."
             }
 
             val lifecycle = RetainedLifecycleImpl()
 
-            val wmfOwner = requireNotNull(vmSubcomponentFactoryMap[scopeClass.name]) {
-                "Expected the Sealant Subcomponent factory class '${scopeClass.name}' to be " +
+            val wmfOwner = requireNotNull(vmSubcomponentFactoryMap[scopeClass]) {
+                "Expected the Sealant Subcomponent factory class '${scopeClass.qualifiedName}' to be " +
                         "available in the multi-binding of @SealantViewModelSupport.SubcomponentMap " +
                         "but none was found. Found only: ${vmSubcomponentFactoryMap.keys.toList()}"
-            }.get().create(
+            }.invoke().create(
                 ssHandle = extras.createSavedStateHandle(),
                 vmLifecycle = lifecycle,
             ) as ViewModelFactoriesOwner
@@ -79,14 +79,14 @@ public class SealantViewModelFactory internal constructor(
             val viewModel = when {
                 provider != null && assistedFactory != null -> {
                     throw AssertionError(
-                        "Found the @ContributesViewModel-annotated class ${modelClass.name} in both the " +
+                        "Found the @ContributesViewModel-annotated class ${modelClass.qualifiedName} in both the " +
                                 "multi-bindings of @SealantViewModelMap and @SealantViewModelAssistedMap."
                     )
                 }
 
                 assistedFactory != null -> {
                     checkNotNull(creationCallback) {
-                        "Found @ContributesViewModel-annotated class ${modelClass.name} using " +
+                        "Found @ContributesViewModel-annotated class ${modelClass.qualifiedName} using " +
                                 "@AssistedInject but no creation callback was provided in CreationExtras."
                     }
                     creationCallback.invoke(assistedFactory) as T
@@ -94,15 +94,15 @@ public class SealantViewModelFactory internal constructor(
 
                 provider != null -> {
                     check(creationCallback == null) {
-                        "Found creation callback but class ${modelClass.name} " +
+                        "Found creation callback but class ${modelClass.qualifiedName} " +
                                 "does not have an assisted factory specified in @ContributesViewModel."
                     }
-                    provider.get() as T
+                    provider() as T
                 }
 
                 else -> {
                     throw IllegalStateException(
-                        "Expected the @ContributesViewModel-annotated class ${modelClass.name} " +
+                        "Expected the @ContributesViewModel-annotated class ${modelClass.qualifiedName} " +
                                 "to be available in the multi-binding of @SealantViewModelMap but none was found."
                     )
                 }

@@ -3,7 +3,7 @@ package dev.steinerok.sealant.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
-import dagger.assisted.AssistedInject
+import dev.zacsweers.metro.AssistedInject
 
 /**
  * Returns a new `CreationExtras` with the original entries plus the passed in creation

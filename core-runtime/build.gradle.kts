@@ -5,5 +5,5 @@ plugins {
 }
 
 dependencies {
-    api(libs.dagger.runtime)
+    api(libs.metro.runtime)
 }

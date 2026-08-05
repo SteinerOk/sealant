@@ -3,19 +3,17 @@
 [![GitHub release](https://img.shields.io/maven-central/v/io.github.steinerok.sealant/di-common)](https://search.maven.org/search?q=g:io.github.steinerok.sealant)
 [![License](https://img.shields.io/badge/license-apache2.0-blue?style=flat-square.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Sealant creates [Dagger] bindings and integrations for Android classes using the [Anvil-KSP].
+Sealant creates [Metro] bindings and integrations for Android classes.
 This is meant to be an alternative to [Hilt], for those who'd prefer to enjoy the faster
-compilation and better flexibility of Anvil-KSP.
+compilation and better flexibility of Metro.
 
-Since Sealant is an extension upon Anvil-KSP, its code generation will be applied to **Kotlin** files
-only.
+Sealant's code generation is applied to **Kotlin** files only.
 
-Inspired by: Marcello Galhardo article [N26 Path to Anvil], Zac Sweers
-article [Extending Anvil for Fun and Profit] and Rick Busarow library [Tangle]
+Inspired by: Zac Sweers [Metro] and Rick Busarow library [Tangle]
 
 ## What Sealant Generates
 
-Sealant builds on top of [Anvil-KSP] and generates:
+Sealant builds on top of [Metro] and generates:
 
 * member injectors for `Activity`, `Service`, `BroadcastReceiver` and `ContentProvider`
   classes annotated with `@InjectWith`
@@ -30,11 +28,11 @@ Sealant code generation runs on **Kotlin** sources only.
 
 ### Requirements
 
-`0.6.0-beta04` is built against:
+`0.6.0` is built against:
 
-* Kotlin `2.3.21`
-* KSP `2.3.7`
-* Anvil-KSP `0.5.4`
+* Kotlin `2.4.10`
+* KSP `2.3.11`
+* Metro `1.4.0`
 
 Make sure `mavenCentral()` is available in your repositories:
 
@@ -48,15 +46,13 @@ repositories {
 
 ```toml
 [versions]
-kotlin = "2.3.21"
-ksp = "2.3.7"
-anvilKsp = "0.5.4"
-metro = "1.0.0"
-sealant = "0.6.0-beta04"
+kotlin = "2.4.10"
+ksp = "2.3.11"
+metro = "1.4.0"
+sealant = "0.7.0-beta01"
 
 [libraries]
-anvilKsp-annotations = { module = "dev.zacsweers.anvil:annotations", version.ref = "anvilKsp" }
-anvilKsp-annotations-optional = { module = "dev.zacsweers.anvil:annotations-optional", version.ref = "anvilKsp" }
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
 
 sealant-diCommon = { module = "io.github.steinerok.sealant:di-common", version.ref = "sealant" }
 sealant-core-runtime = { module = "io.github.steinerok.sealant:sealant-core-runtime", version.ref = "sealant" }
@@ -72,7 +68,6 @@ sealant-work-compiler-ksp = { module = "io.github.steinerok.sealant:sealant-work
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-anvilKsp = { id = "dev.zacsweers.anvil", version.ref = "anvilKsp" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 ```
 
@@ -84,23 +79,11 @@ Sealant scopes and application integration.
 ```kotlin
 plugins {
     alias(libs.plugins.ksp)
-    alias(libs.plugins.anvilKsp)
-}
-
-anvil {
-    useKsp(
-        contributesAndFactoryGeneration = true,
-        componentMerging = true,
-    )
-    kspContributingAnnotations.addAll(
-        "dev.steinerok.sealant.core.SealantConfiguration",
-        "dev.steinerok.sealant.core.SealantIntegration",
-    )
+    alias(libs.plugins.metro)
 }
 
 dependencies {
-    implementation(libs.anvilKsp.annotations)
-    implementation(libs.anvilKsp.annotations.optional)
+    implementation(libs.metro.runtime)
 
     implementation(libs.sealant.diCommon)
     implementation(libs.sealant.core.runtime)
@@ -116,26 +99,11 @@ AppComponent, Fragment, ViewModel and WorkManager support in one Android module.
 ```kotlin
 plugins {
     alias(libs.plugins.ksp)
-    alias(libs.plugins.anvilKsp)
-}
-
-anvil {
-    useKsp(
-        contributesAndFactoryGeneration = true,
-        componentMerging = true,
-    )
-    kspContributingAnnotations.addAll(
-        "dev.steinerok.sealant.appcomponent.InjectWith",
-        "dev.steinerok.sealant.fragment.ContributesFragment",
-        "dev.steinerok.sealant.viewmodel.ContributesViewModel",
-        "dev.steinerok.sealant.viewmodel.ContributesToViewModel",
-        "dev.steinerok.sealant.work.ContributesWorker",
-    )
+    alias(libs.plugins.metro)
 }
 
 dependencies {
-    implementation(libs.anvilKsp.annotations)
-    implementation(libs.anvilKsp.annotations.optional)
+    implementation(libs.metro.runtime)
 
     implementation(libs.sealant.diCommon)
     implementation(libs.sealant.appcomponent.runtime)
@@ -151,30 +119,6 @@ dependencies {
 ```
 
 You only need to add the runtime/compiler pairs you actually use.
-
-### Optional: Metro-backed generation
-
-Sealant can also generate Metro-compatible bindings. Enable the Metro plugin and set the
-`sealant.codegen.mode` KSP argument:
-
-```kotlin
-plugins {
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.metro)
-}
-
-metro {
-    enableKClassToClassMapKeyInterop = true
-    interop {
-        includeDagger(includeJakarta = false)
-        includeAnvilForDagger(includeJakarta = false)
-    }
-}
-
-ksp {
-    arg("sealant.codegen.mode", "metroInterop")
-}
-```
 
 ## Usage
 
@@ -207,20 +151,58 @@ abstract class GuestScope private constructor()
 
 ### 2. Bootstrap the application
 
-Annotate your `Application` with `@SealantIntegration` for every scope that should expose
-Sealant-generated bindings. If you want easy access to the app graph, implement
-`AppComponentProvider<T>`.
+Declare the root graph with `@DependencyGraph` and its factory, then create it with
+`createGraphFactory`. Annotate your `Application` with `@SealantIntegration` for every scope
+that should expose Sealant-generated bindings. If you want easy access to the app graph,
+implement `AppComponentProvider<T>`.
 
 ```kotlin
+@DependencyGraph(SkeletonScope::class)
+interface SkeletonComponent {
+
+    @DependencyGraph.Factory
+    interface Factory {
+        fun create(@Provides application: Application): SkeletonComponent
+    }
+}
+
 @SealantIntegration(scopes = [AppScope::class, GuestScope::class])
 class SealantSampleApp : Application(), AppComponentProvider<AppComponent> {
 
     private val skeletonComponent: SkeletonComponent by lazy(LazyThreadSafetyMode.NONE) {
-        SkeletonComponent.create(this)
+        createGraphFactory<SkeletonComponent.Factory>().create(this)
     }
-    
+
     override val appComponent: AppComponent by lazy(LazyThreadSafetyMode.NONE) {
-        skeletonComponent.cast<AppComponent.Parent>().appComponent()
+        skeletonComponent.asContribution<AppComponent.Parent>().appComponent()
+    }
+}
+```
+
+Child graphs are declared with `@GraphExtension` and contributed to their parent scope:
+
+```kotlin
+@GraphExtension(AppScope::class)
+interface AppComponent {
+
+    @ContributesTo(SkeletonScope::class)
+    interface Parent {
+        fun appComponent(): AppComponent
+    }
+}
+
+@GraphExtension(GuestScope::class)
+interface GuestSubcomponent {
+
+    @ContributesTo(AppScope::class)
+    @GraphExtension.Factory
+    interface Factory {
+        fun create(): GuestSubcomponent
+    }
+
+    @ContributesTo(AppScope::class)
+    interface Parent {
+        fun guestSubcomponentFactory(): Factory
     }
 }
 ```
@@ -286,7 +268,7 @@ can be injected directly, and `@ContributesToViewModel` lets you add scope-speci
 the ViewModel graph.
 
 ```kotlin
-@Module
+@BindingContainer
 @ContributesToViewModel(AppScope::class)
 object AppScopeVmModule {
 
@@ -303,7 +285,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel()
 ```
 
-Use `@SingleIn(SealantViewModelScope::class)` inside `@ContributesToViewModel` modules when a
+Use `@SingleIn(SealantViewModelScope::class)` inside `@ContributesToViewModel` containers when a
 binding should live for exactly one generated ViewModel subcomponent.
 
 To make Sealant-generated `ViewModel`s the default for an activity or fragment, delegate the
@@ -381,20 +363,22 @@ class SealantSampleApp : Application(), Configuration.Provider {
 
 ## Migration Notes
 
-Starting with `0.6.x`, Sealant publishes:
+Starting with `0.6.x`, Sealant:
 
-* `*-runtime` artifacts instead of the old `*-api` artifacts
-* `*-compiler-ksp` artifacts instead of the old `*-codegen` and embedded compiler modules
+* publishes `*-runtime` artifacts instead of the old `*-api` artifacts
+* publishes `*-compiler-ksp` artifacts instead of the old `*-codegen` and embedded compiler modules
+* is Metro-only: all generated bindings target `dev.zacsweers.metro.*` annotations, and the
+  legacy Dagger/Anvil generation path has been removed
 
-If you are upgrading from an older version, update artifact names and make sure the relevant
-modules are registered in `anvil.kspContributingAnnotations`.
+If you are upgrading from an older version, update artifact names and apply the `metro` Gradle
+plugin in every module that consumes Sealant-generated code.
 
 ## Samples
 
 See the sample projects in this repository:
 
-* `sample/anvil` for the standard Anvil-KSP setup
-* `sample/metro` and `sample/metro-experiment` for Metro-backed generation
+* `sample/metro` — the full Sealant setup backed by Metro
+* `sample/metro/app-multi` — a minimal multi-module Metro graph without Sealant integrations
 
 ## Contributions
 
@@ -417,14 +401,8 @@ Make sure to read the [Contributing](CONTRIBUTING.md) page first though.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-[Anvil-KSP]: https://github.com/zacsweers/anvil
-
-[Dagger]: https://dagger.dev
+[Metro]: https://zacsweers.github.io/metro/
 
 [Hilt]: https://dagger.dev/hilt/
-
-[N26 Path to Anvil]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
-
-[Extending Anvil for Fun and Profit]: https://dev.to/marcellogalhardo/n26-path-to-anvil-abd
 
 [Tangle]: https://rbusarow.github.io/Tangle/

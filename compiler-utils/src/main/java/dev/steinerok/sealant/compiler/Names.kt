@@ -24,7 +24,6 @@ import kotlin.reflect.KClass
  *
  */
 public object ClassNames {
-    public val javaClazz: ClassName = Class::class.asClassName()
     public val kotlinClazz: ClassName = KClass::class.asClassName()
     public val any: ClassName = Any::class.asClassName()
     public val nothing: ClassName = Nothing::class.asClassName()
@@ -43,49 +42,27 @@ public object ClassNames {
         "dev.steinerok.sealant.core.internal", "InternalSealantApi"
     )
 
-    public val inject: ClassName = ClassName("javax.inject", "Inject")
-    public val named: ClassName = ClassName("javax.inject", "Named")
-    public val provider: ClassName = ClassName("javax.inject", "Provider")
-    public val qualifier: ClassName = ClassName("javax.inject", "Qualifier")
+    // JSR-330 style core annotations, provided natively by Metro.
+    public val inject: ClassName = ClassName("dev.zacsweers.metro", "Inject")
+    public val named: ClassName = ClassName("dev.zacsweers.metro", "Named")
+    public val qualifier: ClassName = ClassName("dev.zacsweers.metro", "Qualifier")
 
-    public val binds: ClassName = ClassName("dagger", "Binds")
-    public val bindsInstance: ClassName = ClassName("dagger", "BindsInstance")
-    public val module: ClassName = ClassName("dagger", "Module")
-    public val provides: ClassName = ClassName("dagger", "Provides")
-    public val assisted: ClassName = ClassName("dagger.assisted", "Assisted")
-    public val assistedFactory: ClassName = ClassName("dagger.assisted", "AssistedFactory")
-    public val assistedInject: ClassName = ClassName("dagger.assisted", "AssistedInject")
-    public val classKey: ClassName = ClassName("dagger.multibindings", "ClassKey")
-    public val intoMap: ClassName = ClassName("dagger.multibindings", "IntoMap")
-    public val intoSet: ClassName = ClassName("dagger.multibindings", "IntoSet")
-    public val multibinds: ClassName = ClassName("dagger.multibindings", "Multibinds")
-    public val stringKey: ClassName = ClassName("dagger.multibindings", "StringKey")
-    public val membersInjector: ClassName = ClassName("dagger", "MembersInjector")
-    public val daggerFactory: ClassName = ClassName("dagger.internal", "Factory")
+    public val binds: ClassName = ClassName("dev.zacsweers.metro", "Binds")
+    public val bindingContainer: ClassName = ClassName("dev.zacsweers.metro", "BindingContainer")
+    public val provides: ClassName = ClassName("dev.zacsweers.metro", "Provides")
+    public val assisted: ClassName = ClassName("dev.zacsweers.metro", "Assisted")
+    public val assistedFactory: ClassName = ClassName("dev.zacsweers.metro", "AssistedFactory")
+    public val assistedInject: ClassName = ClassName("dev.zacsweers.metro", "AssistedInject")
+    public val intoMap: ClassName = ClassName("dev.zacsweers.metro", "IntoMap")
+    public val intoSet: ClassName = ClassName("dev.zacsweers.metro", "IntoSet")
+    public val multibinds: ClassName = ClassName("dev.zacsweers.metro", "Multibinds")
+    public val stringKey: ClassName = ClassName("dev.zacsweers.metro", "StringKey")
+    public val membersInjector: ClassName = ClassName("dev.zacsweers.metro", "MembersInjector")
 
-    public val contributesBinding: ClassName =
-        ClassName("com.squareup.anvil.annotations", "ContributesBinding")
-    public val contributesMultibinding: ClassName =
-        ClassName("com.squareup.anvil.annotations", "ContributesMultibinding")
-    public val contributesSubcomponent: ClassName =
-        ClassName("com.squareup.anvil.annotations", "ContributesSubcomponent")
-    public val contributesSubcomponentFactory: ClassName =
-        ClassName("com.squareup.anvil.annotations", "ContributesSubcomponent", "Factory")
-    public val contributesTo: ClassName =
-        ClassName("com.squareup.anvil.annotations", "ContributesTo")
-    public val mergeComponent: ClassName =
-        ClassName("com.squareup.anvil.annotations", "MergeComponent")
-    public val mergeComponentFactory: ClassName =
-        ClassName("com.squareup.anvil.annotations", "MergeComponent", "Factory")
-    public val mergeSubcomponent: ClassName =
-        ClassName("com.squareup.anvil.annotations", "MergeSubcomponent")
-    public val mergeSubcomponentFactory: ClassName =
-        ClassName("com.squareup.anvil.annotations", "MergeSubcomponent", "Factory")
-
-    public val singleIn: ClassName =
-        ClassName("com.squareup.anvil.annotations.optional", "SingleIn")
-    public val forScope: ClassName =
-        ClassName("com.squareup.anvil.annotations.optional", "ForScope")
+    public val contributesTo: ClassName = ClassName("dev.zacsweers.metro", "ContributesTo")
+    public val singleIn: ClassName = ClassName("dev.zacsweers.metro", "SingleIn")
+    public val graphExtension: ClassName = ClassName("dev.zacsweers.metro", "GraphExtension")
+    public val graphExtensionFactory: ClassName = graphExtension.nestedClass("Factory")
 
     public val androidContext: ClassName = ClassName("android.content", "Context")
     public val androidApplication: ClassName = ClassName("android.app", "Application")

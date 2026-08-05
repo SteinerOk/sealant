@@ -18,10 +18,10 @@
 package dev.steinerok.sealant.fragment.compiler.ksp
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.WildcardTypeName
-import com.squareup.kotlinpoet.jvm.jvmSuppressWildcards
 import dev.steinerok.sealant.compiler.ClassNames
 
 private const val componentPkg = "dev.steinerok.sealant.fragment"
@@ -42,14 +42,14 @@ internal val ClassNames.sealantFragmentFactoryOwner
 internal val ClassNames.fragmentKey
     get() = ClassName(componentPkg, "FragmentKey")
 
-internal val ClassNames.javaClazzOutFragment
-    get() = javaClazz.parameterizedBy(WildcardTypeName.producerOf(androidxFragment))
+internal val ClassNames.kotlinClazzOutFragment
+    get() = kotlinClazz.parameterizedBy(WildcardTypeName.producerOf(androidxFragment))
 
 internal val ClassNames.fragmentMap
-    get() = MAP.parameterizedBy(ClassNames.javaClazzOutFragment, androidxFragment)
+    get() = MAP.parameterizedBy(ClassNames.kotlinClazzOutFragment, androidxFragment)
 
 internal val ClassNames.fragmentProviderMap
     get() = MAP.parameterizedBy(
-        ClassNames.javaClazzOutFragment,
-        provider.parameterizedBy(androidxFragment).jvmSuppressWildcards()
+        ClassNames.kotlinClazzOutFragment,
+        LambdaTypeName.get(returnType = androidxFragment)
     )

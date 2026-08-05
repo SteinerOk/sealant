@@ -47,7 +47,7 @@ import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 /**
  * Description of the ViewModel scope marker generation.
  * This generator creates an abstract class that acts as a namespace or
- * structural marker for ViewModel injection within a specific Dagger/Anvil scope.
+ * structural marker for ViewModel injection within a specific Metro scope.
  */
 public class ChildScopesSymbolProcessor(
     private val codeGenerator: CodeGenerator,

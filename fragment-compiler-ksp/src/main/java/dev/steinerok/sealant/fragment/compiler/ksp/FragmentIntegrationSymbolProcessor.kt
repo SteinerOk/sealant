@@ -34,6 +34,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import dev.steinerok.sealant.compiler.ClassNames
+import dev.steinerok.sealant.compiler.AnnotationSpec
 import dev.steinerok.sealant.compiler.ClassSpec
 import dev.steinerok.sealant.compiler.CompanionObjectSpec
 import dev.steinerok.sealant.compiler.FunSpec
@@ -108,24 +109,24 @@ public class FragmentIntegrationSymbolProcessor(
     /**
      * Generates the Fragment Integrative Module.
      * * Contributes a module to the `<Scope>` that serves two primary purposes:
-     * First, it declares a `@Multibinds` map for Fragments, ensuring the Dagger
+     * First, it declares a `@Multibinds` map for Fragments, ensuring the Metro
      * graph compiles successfully even if no specific Fragments have been bound yet.
      * Second, it provides a custom `SealantFragmentFactory` using the aggregated
      * map of Fragment providers. This factory is responsible for instantiating
      * Fragments with their required dependencies injected into their constructors.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public abstract class <Scope>_sealantFragment_IntegrativeModule {
      *
-     *     @Multibinds
-     *     public abstract fun bindFragmentMap(): Map<Class<out Fragment>, Fragment>
+     *     @Multibinds(allowEmpty = true)
+     *     public abstract fun bindFragmentMap(): Map<KClass<out Fragment>, Fragment>
      *
      *     public companion object {
      *         @Provides
      *         public fun provideFragmentFactory(
-     *             fragmentProviderMap: Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
+     *             fragmentProviderMap: Map<KClass<out Fragment>, () -> Fragment>
      *         ): SealantFragmentFactory = SealantFragmentFactory(fragmentProviderMap)
      *     }
      * }
@@ -141,11 +142,13 @@ public class FragmentIntegrationSymbolProcessor(
 
         return ClassSpec(imClassName) {
             addModifiers(KModifier.ABSTRACT)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
             addContributesToAnnotation(scopeClassName)
 
             addFunction(FunSpec("bindFragmentMap") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.fragmentMap)
             })

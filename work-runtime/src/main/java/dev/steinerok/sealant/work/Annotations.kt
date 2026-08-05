@@ -17,11 +17,11 @@ package dev.steinerok.sealant.work
 
 import androidx.work.ListenableWorker
 import dev.steinerok.sealant.core.internal.InternalSealantApi
-import javax.inject.Qualifier
+import dev.zacsweers.metro.Qualifier
 import kotlin.reflect.KClass
 
 /**
- * Adds the annotated [ListenableWorker] to Dagger's graph via Sealant.
+ * Adds the annotated [ListenableWorker] to Metro's graph via Sealant.
  * The corresponding Worker can then be created using [SealantWorkerFactory].
  */
 @Target(AnnotationTarget.CLASS)

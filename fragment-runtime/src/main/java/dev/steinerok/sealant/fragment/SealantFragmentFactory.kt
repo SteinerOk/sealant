@@ -18,15 +18,15 @@ package dev.steinerok.sealant.fragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import dev.steinerok.sealant.core.internal.InternalSealantApi
-import javax.inject.Provider
+import kotlin.reflect.KClass
 
-private typealias FragmentProviderMap = Map<Class<out Fragment>, @JvmSuppressWildcards Provider<Fragment>>
+private typealias FragmentProviderMap = Map<KClass<out Fragment>, () -> Fragment>
 
 /**
  * A [FragmentFactory] backed by Sealant's fragment multibinding map.
  *
  * If the requested fragment class is present in the generated provider map, the fragment is
- * created through Dagger. Otherwise this factory falls back to the default
+ * created through Metro. Otherwise this factory falls back to the default
  * [FragmentFactory.instantiate] behavior.
  */
 public class SealantFragmentFactory @InternalSealantApi constructor(
@@ -35,7 +35,8 @@ public class SealantFragmentFactory @InternalSealantApi constructor(
 
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {
         val fragmentClazz = loadFragmentClass(classLoader, className)
-        return fragProviderMap[fragmentClazz]?.get() ?: super.instantiate(classLoader, className)
+
+        return fragProviderMap[fragmentClazz.kotlin]?.invoke() ?: super.instantiate(classLoader, className)
     }
 
     /** Exposes a configured [SealantFragmentFactory] from the owning component. */

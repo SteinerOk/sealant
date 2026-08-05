@@ -34,6 +34,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import dev.steinerok.sealant.compiler.ClassNames
+import dev.steinerok.sealant.compiler.AnnotationSpec
 import dev.steinerok.sealant.compiler.ClassSpec
 import dev.steinerok.sealant.compiler.CompanionObjectSpec
 import dev.steinerok.sealant.compiler.FunSpec
@@ -115,18 +116,18 @@ public class WorkIntegrationSymbolProcessor(
      * to the correct assisted factory at runtime.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public abstract class <Scope>_SealantWork_IntegrativeModule {
      *
-     *     @Multibinds
+     *     @Multibinds(allowEmpty = true)
      *     @SealantWorkerAssistedFactoryMap
      *     public abstract fun bindWafMap(): Map<String, WorkerAssistedFactory<out ListenableWorker>>
      *
      *     public companion object {
      *         @Provides
      *         public fun provideWorkerFactory(
-     *             @SealantWorkerAssistedFactoryMap wafProviderMap: Map<String, @JvmSuppressWildcards Provider<WorkerAssistedFactory<out ListenableWorker>>>
+     *             @SealantWorkerAssistedFactoryMap wafProviderMap: Map<String, () -> WorkerAssistedFactory<out ListenableWorker>>
      *         ): SealantWorkerFactory = SealantWorkerFactory(wafProviderMap)
      *     }
      * }
@@ -142,11 +143,13 @@ public class WorkIntegrationSymbolProcessor(
 
         return ClassSpec(wimClassName) {
             addModifiers(KModifier.ABSTRACT)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
             addContributesToAnnotation(scopeClassName)
 
             addFunction(FunSpec(name = "bindWafMap") {
-                addAnnotation(ClassNames.multibinds)
+                addAnnotation(AnnotationSpec(ClassNames.multibinds) {
+                    addMember("allowEmpty = true")
+                })
                 addAnnotation(ClassNames.sealantWorkerAssistedFactoryMap)
                 addModifiers(KModifier.ABSTRACT)
                 returns(ClassNames.workerAssistedFactoryMap)

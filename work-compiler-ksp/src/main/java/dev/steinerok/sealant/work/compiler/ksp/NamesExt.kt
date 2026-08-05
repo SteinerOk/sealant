@@ -18,11 +18,11 @@
 package dev.steinerok.sealant.work.compiler.ksp
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.WildcardTypeName
-import com.squareup.kotlinpoet.jvm.jvmSuppressWildcards
 import dev.steinerok.sealant.compiler.ClassNames
 
 internal const val featureName = "SealantWork"
@@ -57,7 +57,7 @@ internal val ClassNames.workerAssistedFactoryMap
 internal val ClassNames.workerAssistedFactoryProviderMap
     get() = MAP.parameterizedBy(
         STRING,
-        provider.parameterizedBy(workerAssistedFactoryOutListenableWorker).jvmSuppressWildcards()
+        LambdaTypeName.get(returnType = workerAssistedFactoryOutListenableWorker)
     )
 
 internal val ClassNames.sealantWorkerAssistedFactoryMap

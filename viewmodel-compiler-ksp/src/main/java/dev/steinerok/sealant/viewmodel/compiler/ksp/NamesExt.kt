@@ -18,10 +18,10 @@
 package dev.steinerok.sealant.viewmodel.compiler.ksp
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.SET
-import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.WildcardTypeName
 import dev.steinerok.sealant.compiler.ClassNames
 
@@ -40,17 +40,20 @@ internal val ClassNames.viewModelLifecycle
 internal val ClassNames.contributesToViewModel
     get() = ClassName(componentPkg, "ContributesToViewModel")
 
-internal val ClassNames.javaClazzOutViewModel
-    get() = javaClazz.parameterizedBy(WildcardTypeName.producerOf(androidxViewModel))
+internal val ClassNames.kotlinClazzOutViewModel
+    get() = kotlinClazz.parameterizedBy(WildcardTypeName.producerOf(androidxViewModel))
+
+internal val ClassNames.kotlinClazzOutAny
+    get() = kotlinClazz.parameterizedBy(WildcardTypeName.producerOf(any))
 
 internal val ClassNames.viewModelClassSet
-    get() = SET.parameterizedBy(ClassNames.javaClazzOutViewModel)
+    get() = SET.parameterizedBy(ClassNames.kotlinClazzOutViewModel)
 
 internal val ClassNames.viewModelMap
-    get() = MAP.parameterizedBy(ClassNames.javaClazzOutViewModel, androidxViewModel)
+    get() = MAP.parameterizedBy(ClassNames.kotlinClazzOutViewModel, androidxViewModel)
 
 internal val ClassNames.viewModelAssistedMap
-    get() = MAP.parameterizedBy(ClassNames.javaClazzOutViewModel, any)
+    get() = MAP.parameterizedBy(ClassNames.kotlinClazzOutViewModel, any)
 
 internal val ClassNames.sealantViewModelScope
     get() = ClassName(componentPkg, "SealantViewModelScope")
@@ -73,6 +76,9 @@ internal val ClassNames.sealantViewModelSupportSubcomponentMap
 internal val ClassNames.viewModelKey
     get() = ClassName(componentPkg, "ViewModelKey")
 
+internal val ClassNames.sealantViewModelScopeKey
+    get() = ClassName(componentPkg, "SealantViewModelScopeKey")
+
 internal val ClassNames.sealantViewModelSubcomponent
     get() = ClassName(componentPkg, "SealantViewModelSubcomponent")
 
@@ -80,12 +86,12 @@ internal val ClassNames.sealantViewModelSubcomponentFactory
     get() = sealantViewModelSubcomponent.nestedClass("Factory")
 
 internal val ClassNames.sealantViewModelSubcomponentFactoryMap
-    get() = MAP.parameterizedBy(STRING, sealantViewModelSubcomponentFactory)
+    get() = MAP.parameterizedBy(kotlinClazzOutAny, sealantViewModelSubcomponentFactory)
 
 internal val ClassNames.sealantViewModelSubcomponentFactoryProviderMap
     get() = MAP.parameterizedBy(
-        STRING,
-        ClassNames.provider.parameterizedBy(ClassNames.sealantViewModelSubcomponentFactory)
+        kotlinClazzOutAny,
+        LambdaTypeName.get(returnType = ClassNames.sealantViewModelSubcomponentFactory)
     )
 
 internal val ClassNames.sealantViewModelSubcomponentParent

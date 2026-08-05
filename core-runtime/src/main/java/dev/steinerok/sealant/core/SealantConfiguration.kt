@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 /**
  * Declares which Sealant integrations should be generated for the annotated scope.
  *
- * Apply this annotation to a scope marker class that participates in your Anvil graph.
+ * Apply this annotation to a scope marker class that participates in your Metro graph.
  * Sealant uses it as the source of truth for deciding which feature-specific processors
  * should contribute bindings for that scope.
  */

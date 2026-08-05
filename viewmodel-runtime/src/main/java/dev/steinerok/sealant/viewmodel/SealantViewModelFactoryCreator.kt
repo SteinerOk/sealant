@@ -24,8 +24,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.savedstate.SavedStateRegistryOwner
 import dev.steinerok.sealant.core.internal.InternalSealantApi
-import javax.inject.Inject
-import javax.inject.Provider
+import dev.zacsweers.metro.Inject
+import kotlin.reflect.KClass
 
 /**
  * Builds [ViewModelProvider.Factory] instances backed by Sealant's generated ViewModel graph.
@@ -36,8 +36,8 @@ import javax.inject.Provider
  */
 public open class SealantViewModelFactoryCreator @InternalSealantApi @Inject constructor(
     private val application: Application,
-    @param:SealantViewModelSupport.KeySet private val vmKeySet: @JvmSuppressWildcards Set<Class<out ViewModel>>,
-    @param:SealantViewModelSupport.SubcomponentMap private val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<SealantViewModelSubcomponent.Factory>>,
+    @param:SealantViewModelSupport.KeySet private val vmKeySet: @JvmSuppressWildcards Set<KClass<out ViewModel>>,
+    @param:SealantViewModelSupport.SubcomponentMap private val vmSubcomponentFactoryMap: Map<KClass<out Any>, () -> SealantViewModelSubcomponent.Factory>,
 ) {
 
     /** Creates a Sealant-aware [ViewModelProvider.Factory] for the given [activity]. */

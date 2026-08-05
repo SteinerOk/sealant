@@ -97,15 +97,15 @@ public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
 
     /**
      * Generates the Module Wrapper Interface.
-     * * Acts as a structural bridge by utilizing Dagger's `includes` parameter within
-     * the `@Module` annotation. It takes the target `<Module>` and contributes it
-     * directly to the `<Scope>_ViewModel` via Anvil's `@ContributesTo`. This pattern
-     * is highly useful for seamlessly integrating legacy Dagger modules, third-party
-     * modules, or shared modules into the Anvil graph without needing to modify
+     * * Acts as a structural bridge by utilizing Metro's `includes` parameter within
+     * the `@BindingContainer` annotation. It takes the target `<Module>` and contributes it
+     * directly to the `<Scope>_ViewModel` via `@ContributesTo`. This pattern
+     * is highly useful for seamlessly integrating shared binding containers into the
+     * Metro graph without needing to modify
      * their original source code.
      * * Output example:
      * ```kotlin
-     * @Module(includes = [<Module>::class])
+     * @BindingContainer(includes = [<Module>::class])
      * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <Module>_Wrapper
      * ```
@@ -121,7 +121,7 @@ public class ViewModelSubcomponentModuleWrapperSymbolProcessor(
 
         return InterfaceSpec(wClassName) {
             addContributesToAnnotation(vmScopeClassName)
-            addAnnotation(AnnotationSpec(ClassNames.module) {
+            addAnnotation(AnnotationSpec(ClassNames.bindingContainer) {
                 addMember("includes = [%T::class]", origClassName)
             })
 

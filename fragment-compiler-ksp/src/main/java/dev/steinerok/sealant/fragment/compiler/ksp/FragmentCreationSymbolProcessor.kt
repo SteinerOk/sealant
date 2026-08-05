@@ -109,18 +109,18 @@ public class FragmentCreationSymbolProcessor(
     /**
      * Generates the Fragment Binds Module.
      * * Contributes a binding module to the target `<Scope>`. By combining `@Binds`,
-     * `@IntoMap`, and the custom `@FragmentKey`, it instructs Dagger to map the
+     * `@IntoMap`, and the custom `@FragmentKey`, it instructs Metro to map the
      * specific Fragment `<Type>` to its base `Fragment` class within a Multibinding Map.
      * This allows the dependency graph to locate and instantiate the correct Fragment
      * at runtime based on its class type.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Type>_BindsModule {
      *     @Binds
      *     @IntoMap
-     *     @FragmentKey(<Type>::class)
+     *     @FragmentKey
      *     public fun bind(instance: <Type>): Fragment
      * }
      * ```
@@ -135,7 +135,7 @@ public class FragmentCreationSymbolProcessor(
         val bmClassName = ClassName(origClassName.packageName, bmNameStr)
 
         return InterfaceSpec(bmClassName) {
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
             addContributesToAnnotation(scopeClassName) {
                 val replaces = clazz
                     .requireAnnotation(ClassNames.contributesFragment)
@@ -152,9 +152,7 @@ public class FragmentCreationSymbolProcessor(
             addFunction(FunSpec("bind") {
                 addAnnotation(ClassNames.binds)
                 addAnnotation(ClassNames.intoMap)
-                addAnnotation(AnnotationSpec(ClassNames.fragmentKey) {
-                    addMember("%T::class", origClassName)
-                })
+                addAnnotation(ClassNames.fragmentKey)
                 addModifiers(KModifier.ABSTRACT)
                 addParameter(ParameterSpec("instance", origClassName))
                 returns(ClassNames.androidxFragment)

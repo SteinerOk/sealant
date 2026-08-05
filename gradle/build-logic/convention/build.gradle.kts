@@ -15,6 +15,9 @@ gradlePlugin {
         register("dev.steinerok.sealant.android-application") {
             implementationClass = "AndroidApplicationConventionPlugin"
         }
+        register("dev.steinerok.sealant.android-application-new") {
+            implementationClass = "AndroidApplicationNewConventionPlugin"
+        }
         register("dev.steinerok.sealant.android-library") {
             implementationClass = "AndroidLibraryConventionPlugin"
         }
@@ -28,7 +31,6 @@ dependencies {
 
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.android.gradleApiPlugin)
-    implementation(libs.anvilKsp.gradlePlugin)
     implementation(libs.spotless.gradlePlugin)
     implementation(libs.mavenPublish.default.gradlePlugin)
 }

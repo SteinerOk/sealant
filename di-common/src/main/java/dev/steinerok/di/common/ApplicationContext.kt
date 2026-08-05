@@ -15,7 +15,7 @@
  */
 package dev.steinerok.di.common
 
-import javax.inject.Qualifier
+import dev.zacsweers.metro.Qualifier
 
 /**
  * Qualifier for dependencies that must use the process-wide `Application` [android.content.Context].

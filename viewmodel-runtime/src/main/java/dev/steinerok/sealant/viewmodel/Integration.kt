@@ -19,7 +19,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 import dev.steinerok.sealant.viewmodel.lifecycle.ViewModelLifecycle
-import javax.inject.Provider
+import kotlin.reflect.KClass
 
 /**
  * Marker scope used for generated ViewModel-only subcomponents.
@@ -57,12 +57,12 @@ public interface SealantViewModelSubcomponent {
         /** Set of ViewModel classes supported by the current parent scope. */
         @InternalSealantApi
         @get:SealantViewModelSupport.KeySet
-        public val vmKeySet: Set<Class<out ViewModel>>
+        public val vmKeySet: Set<KClass<out ViewModel>>
 
-        /** Map from scope name to the generated subcomponent factory for that scope. */
+        /** Map from scope class to the generated subcomponent factory for that scope. */
         @InternalSealantApi
         @get:SealantViewModelSupport.SubcomponentMap
-        public val vmSubcomponentFactoryMap: Map<String, @JvmSuppressWildcards Provider<Factory>>
+        public val vmSubcomponentFactoryMap: Map<KClass<out Any>, () -> Factory>
 
         /** Entry point used by UI layers to build [androidx.lifecycle.ViewModelProvider.Factory] instances. */
         @InternalSealantApi
@@ -81,9 +81,9 @@ public interface ViewModelFactoriesOwner {
 
     /** Map of directly instantiable ViewModels. */
     @get:SealantViewModelMap
-    public val vmProviderMap: Map<Class<out ViewModel>, @JvmSuppressWildcards Provider<ViewModel>>
+    public val vmProviderMap: Map<KClass<out ViewModel>, () -> ViewModel>
 
     /** Map of assisted factories for ViewModels that require runtime arguments. */
     @get:SealantViewModelAssistedMap
-    public val vmAssistedMap: Map<Class<out ViewModel>, Any>
+    public val vmAssistedMap: Map<KClass<out ViewModel>, Any>
 }

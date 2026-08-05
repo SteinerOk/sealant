@@ -12,7 +12,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
         )
         // Opt-in to experimental APIs
         optIn.addAll(
-            // "com.squareup.anvil.annotations.ExperimentalAnvilApi",
+            //
         )
     }
 }

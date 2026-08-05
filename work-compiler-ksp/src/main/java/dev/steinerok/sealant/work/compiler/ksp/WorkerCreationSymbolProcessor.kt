@@ -54,7 +54,7 @@ import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
 /**
  * Generates assisted-worker bindings for classes annotated with `@ContributesWorker`.
  *
- * Sealant uses these bindings to connect WorkManager runtime parameters with Dagger-provided
+ * Sealant uses these bindings to connect WorkManager runtime parameters with Metro-provided
  * dependencies through a custom [dev.steinerok.sealant.work.SealantWorkerFactory].
  */
 public class WorkerCreationSymbolProcessor(
@@ -154,7 +154,7 @@ public class WorkerCreationSymbolProcessor(
     /**
      * Generates the Worker Assisted Factory.
      * * Generates an interface annotated with `@AssistedFactory`. This acts as a factory
-     * template, instructing Dagger to generate an implementation that combines the runtime
+     * template, instructing Metro to generate an implementation that combines the runtime
      * parameters (`Context`, `WorkerParameters`) with dependencies from the graph to
      * create the target `<Worker>`.
      * * Output example:
@@ -179,13 +179,13 @@ public class WorkerCreationSymbolProcessor(
     /**
      * Generates the Binds Module for the Factory Map.
      * * Contributes a binding module to the target `<Scope>`. It binds the generated
-     * assisted factory into a Dagger Multibinding Map using a string key corresponding
-     * to the Worker's fully qualified class name. A custom Dagger-aware `WorkerFactory`
+     * assisted factory into a Metro Multibinding Map using a string key corresponding
+     * to the Worker's fully qualified class name. A custom Metro-aware `WorkerFactory`
      * will use this map (identified by `@SealantWorkerAssistedFactoryMap`) to locate
      * the correct factory and instantiate the Worker at runtime.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public interface <Worker>_BindsModule {
      *     @Binds
@@ -206,7 +206,7 @@ public class WorkerCreationSymbolProcessor(
         val bmClassName = ClassName(origClassName.packageName, bmNameStr)
 
         return InterfaceSpec(bmClassName) {
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
             addContributesToAnnotation(scopeClassName)
 
             addFunction(FunSpec("bind") {

@@ -66,7 +66,7 @@ import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
  * - Scope separation: Hilt splits these between `ViewModelComponent` (for the map)
  * and `ActivityRetainedComponent` (for the key set).
  * - Key types: Hilt uses string-based keys (`@StringKey("pkg.$")`), whereas this
- * implementation utilizes direct class types (`Class<out ViewModel>`) for enhanced
+ * implementation utilizes direct class types (`KClass<out ViewModel>`) for enhanced
  * type safety within the designated Sealant scopes.
  *
  * Related with Hilt codegen:
@@ -278,18 +278,18 @@ public class ViewModelCreationSymbolProcessor(
      * Generates the ViewModel Key Set Module.
      * * Contributes to the main `<Scope>` (conceptually similar to Hilt's
      * `ActivityRetainedComponent`). It provides the specific ViewModel's class
-     * into a Dagger Set (`@SealantViewModelMap.KeySet`). This allows the dependency
+     * into a Metro Set (`@SealantViewModelMap.KeySet`). This allows the dependency
      * graph to maintain a registry of all available ViewModels, which can be used
      * for graph validation or by the factory to verify support before instantiation.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>::class)
      * public object <ViewModel>_KeyModule {
      *   @Provides
      *   @IntoSet
      *   @SealantViewModelMap.KeySet
-     *   public fun provide<ViewModel>Key(): Class<out ViewModel> = <ViewModel>::class.java
+     *   public fun provide<ViewModel>Key(): KClass<out ViewModel> = <ViewModel>::class
      * }
      * ```
      */
@@ -303,14 +303,14 @@ public class ViewModelCreationSymbolProcessor(
 
         return ObjectSpec(ClassName(origClassName.packageName, kmNameStr)) {
             addContributesToAnnotation(scopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("provide${origShortName}Key") {
                 addAnnotation(ClassNames.provides)
                 addAnnotation(ClassNames.intoSet)
                 addAnnotation(ClassNames.sealantViewModelSupportKeySet)
-                returns(ClassNames.javaClazzOutViewModel)
-                addStatement("return %T::class.java", origClassName)
+                returns(ClassNames.kotlinClazzOutViewModel)
+                addStatement("return %T::class", origClassName)
             })
 
             addOriginatingKSFile(fileNode)
@@ -325,12 +325,12 @@ public class ViewModelCreationSymbolProcessor(
      * the custom factory to resolve and create the correct ViewModel instance at runtime.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <ViewModel>_BindsModule {
      *   @Binds
      *   @IntoMap
-     *   @ViewModelKey(<ViewModel>::class)
+     *   @ViewModelKey
      *   @SealantViewModelMap
      *   public fun bind(instance: <ViewModel>): ViewModel
      * }
@@ -346,14 +346,12 @@ public class ViewModelCreationSymbolProcessor(
 
         return InterfaceSpec(ClassName(origClassName.packageName, bmNameStr)) {
             addContributesToAnnotation(vmScopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("bind") {
                 addAnnotation(ClassNames.binds)
                 addAnnotation(ClassNames.intoMap)
-                addAnnotation(AnnotationSpec(ClassNames.viewModelKey) {
-                    addMember("%T::class", origClassName)
-                })
+                addAnnotation(ClassNames.viewModelKey)
                 addAnnotation(ClassNames.sealantViewModelMap)
                 addModifiers(KModifier.ABSTRACT)
                 addParameter(ParameterSpec("instance", origClassName))
@@ -374,7 +372,7 @@ public class ViewModelCreationSymbolProcessor(
      * and instantiate the ViewModel with the necessary dynamic arguments.
      * * Output example:
      * ```kotlin
-     * @Module
+     * @BindingContainer
      * @ContributesTo(scope = <Scope>_ViewModel::class)
      * public interface <ViewModel>_AssistedBindsModule {
      *   @Binds
@@ -396,7 +394,7 @@ public class ViewModelCreationSymbolProcessor(
 
         return InterfaceSpec(ClassName(origClassName.packageName, abmNameStr)) {
             addContributesToAnnotation(vmScopeClassName)
-            addAnnotation(ClassNames.module)
+            addAnnotation(ClassNames.bindingContainer)
 
             addFunction(FunSpec("bindFactory") {
                 addAnnotation(ClassNames.binds)

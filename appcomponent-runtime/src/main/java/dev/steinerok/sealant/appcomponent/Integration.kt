@@ -19,30 +19,31 @@ import android.app.Activity
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.ContentProvider
-import dagger.MembersInjector
+import dev.zacsweers.metro.MembersInjector
 import dev.steinerok.sealant.core.internal.InternalSealantApi
+import kotlin.reflect.KClass
 
 /** Type alias for the generated map of activity injectors. */
-public typealias SealantActivityInjectorsMap = Map<Class<out Activity>, SealantInjector<*>>
+public typealias SealantActivityInjectorsMap = Map<KClass<out Activity>, SealantInjector<*>>
 
 /** Type alias for the generated map of broadcast receiver injectors. */
-public typealias SealantBroadcastReceiverInjectorsMap = Map<Class<out BroadcastReceiver>, SealantInjector<*>>
+public typealias SealantBroadcastReceiverInjectorsMap = Map<KClass<out BroadcastReceiver>, SealantInjector<*>>
 
 /** Type alias for the generated map of content provider injectors. */
-public typealias SealantContentProviderInjectorsMap = Map<Class<out ContentProvider>, SealantInjector<*>>
+public typealias SealantContentProviderInjectorsMap = Map<KClass<out ContentProvider>, SealantInjector<*>>
 
 /** Type alias for the generated map of service injectors. */
-public typealias SealantServiceInjectorsMap = Map<Class<out Service>, SealantInjector<*>>
+public typealias SealantServiceInjectorsMap = Map<KClass<out Service>, SealantInjector<*>>
 
 /**
  * Wrapper around a generated [MembersInjector].
  *
- * Sealant adds implementations of this interface to Dagger multibinding maps so framework entry
+ * Sealant adds implementations of this interface to Metro multibinding maps so framework entry
  * points can be injected without depending on generated class names directly.
  */
 public interface SealantInjector<T : Any> {
 
-    /** Backing Dagger injector used to assign members on the target instance. */
+    /** Backing Metro injector used to assign members on the target instance. */
     @InternalSealantApi
     public val injector: MembersInjector<T>
 
@@ -80,5 +81,5 @@ public interface SealantInjectorsOwner {
 public interface SealantInjectable<T : Any> {
 
     /** Returns the injector map matching the current runtime category of [T]. */
-    public fun getInjectorsMap(owner: SealantInjectorsOwner): Map<Class<out T>, SealantInjector<*>>
+    public fun getInjectorsMap(owner: SealantInjectorsOwner): Map<KClass<out T>, SealantInjector<*>>
 }

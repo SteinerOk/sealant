@@ -16,14 +16,14 @@
 package dev.steinerok.sealant.fragment
 
 import androidx.fragment.app.Fragment
-import dagger.MapKey
+import dev.zacsweers.metro.MapKey
 import dev.steinerok.sealant.core.internal.InternalSealantApi
 import kotlin.reflect.KClass
 
 /**
  * Contributes a constructor-injected [Fragment] to Sealant's fragment factory bindings.
  *
- * Sealant generates a Dagger multibinding entry keyed by the fragment class so
+ * Sealant generates a Metro multibinding entry keyed by the fragment class so
  * [SealantFragmentFactory] can instantiate it through the graph at runtime.
  */
 @Target(AnnotationTarget.CLASS)
@@ -37,7 +37,7 @@ public annotation class ContributesFragment(
 
     /**
      * This contributed module will replace these contributed classes. The array is allowed to
-     * include other contributed bindings, multibindings and Dagger modules. All replaced classes
+     * include other contributed bindings, multibindings and Metro binding containers. All replaced classes
      * must use the same scope.
      */
     val replaces: Array<KClass<out Any>> = [],
@@ -49,7 +49,7 @@ public annotation class ContributesFragment(
  * Note this was designed to be used only with [SealantFragmentFactory].
  */
 @InternalSealantApi
-@MapKey
+@MapKey(implicitClassKey = true)
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.FUNCTION,
@@ -60,5 +60,5 @@ public annotation class ContributesFragment(
 public annotation class FragmentKey(
 
     /** Fragment class used as the multibinding key. */
-    val value: KClass<out Fragment>,
+    val value: KClass<out Fragment> = Nothing::class,
 )

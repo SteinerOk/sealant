@@ -50,6 +50,7 @@ import dev.steinerok.sealant.compiler.ksp.SealantFileSpec
 import dev.steinerok.sealant.compiler.ksp.getSymbolsWithAnnotation
 import dev.steinerok.sealant.compiler.ksp.hasSealantFeatureForScope
 import dev.steinerok.sealant.compiler.ksp.implements
+import dev.steinerok.sealant.compiler.ksp.isAnnotationPresent
 import dev.steinerok.sealant.compiler.ksp.requireContainingFile
 import dev.steinerok.sealant.compiler.ksp.scope
 import dev.steinerok.sealant.compiler.ksp.simpleValidatePredicate
@@ -170,18 +171,32 @@ public class ViewModelCreationSymbolProcessor(
         }
 
         val constructors = clazz.getConstructors().toList()
-        val injectConstructors = constructors.filter { constructors ->
-            constructors.annotations.any { annotation ->
-                annotation.shortName.asString() == ClassNames.inject.simpleName
-            }
-        }
-        val assistedConstructors = constructors.filter { constructors ->
-            constructors.annotations.any { annotation ->
-                annotation.shortName.asString() == ClassNames.assistedInject.simpleName
-            }
+
+        // Mirror Metro's semantics: an `@Inject`/`@AssistedInject` annotation on the class
+        // itself applies to the single primary constructor, so either placement is accepted.
+        val injectOnClass = clazz.isAnnotationPresent(ClassNames.inject)
+        val assistedInjectOnClass = clazz.isAnnotationPresent(ClassNames.assistedInject)
+
+        if ((injectOnClass || assistedInjectOnClass) && constructors.size > 1) {
+            logger.error(
+                message = "ViewModel annotated with `@Inject`/`@AssistedInject` on the class " +
+                        "must have exactly one constructor.",
+                symbol = clazz
+            )
+            return null
         }
 
-        val totalInjectedConstructors = injectConstructors.size + assistedConstructors.size
+        val injectConstructors = constructors.filter { constructor ->
+            constructor.isAnnotationPresent(ClassNames.inject)
+        }
+        val assistedConstructors = constructors.filter { constructor ->
+            constructor.isAnnotationPresent(ClassNames.assistedInject)
+        }
+
+        val isInject = injectConstructors.isNotEmpty() || injectOnClass
+        val isAssistedInject = assistedConstructors.isNotEmpty() || assistedInjectOnClass
+
+        val totalInjectedConstructors = (if (isInject) 1 else 0) + (if (isAssistedInject) 1 else 0)
         if (totalInjectedConstructors == 0) {
             logger.error(
                 message = "ViewModel must contain exactly one constructor annotated with `@Inject` or `@AssistedInject`.",
@@ -210,7 +225,6 @@ public class ViewModelCreationSymbolProcessor(
         val factoryDecl = factoryKsType?.declaration as? KSClassDeclaration
         val hasFactorySpecified = factoryDecl != null &&
                 factoryDecl.simpleName.asString() != ClassNames.nothing.simpleName
-        val isAssistedInject = assistedConstructors.isNotEmpty()
 
         if (isAssistedInject) {
             if (!hasFactorySpecified) {

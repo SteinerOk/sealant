@@ -35,7 +35,17 @@ public fun TypeSpec.Builder.addContributesToAnnotation(
 )
 
 /**
+ * Adds an injectable primary constructor backed by the given [propertySpecs].
  *
+ * The `@Inject` annotation is placed on the class itself rather than on the
+ * constructor. Both Metro and Dagger treat class-level `@Inject` as applying to
+ * the class's single (primary) constructor, and this is the recommended style
+ * for classes with exactly one constructor. It also prevents Metro's
+ * "There is only one @Inject-annotated constructor. Consider moving the
+ * annotation to the class instead." warning from being reported on the
+ * generated code.
+ *
+ * Only use this for classes with a single primary constructor.
  */
 public fun TypeSpec.Builder.addPrimaryInjectConstructor(
     vararg propertySpecs: PropertySpec,
@@ -48,9 +58,9 @@ public fun TypeSpec.Builder.addPrimaryInjectConstructor(
     }
     val constructor = ConstructorSpec {
         addParameters(parameters)
-        addAnnotation(AnnotationSpec(ClassNames.inject))
     }
     return this
+        .addAnnotation(AnnotationSpec(ClassNames.inject))
         .primaryConstructor(constructor)
         .addProperties(properties)
 }

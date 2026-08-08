@@ -15,9 +15,6 @@ gradlePlugin {
         register("dev.steinerok.sealant.android-application") {
             implementationClass = "AndroidApplicationConventionPlugin"
         }
-        register("dev.steinerok.sealant.android-application-new") {
-            implementationClass = "AndroidApplicationNewConventionPlugin"
-        }
         register("dev.steinerok.sealant.android-library") {
             implementationClass = "AndroidLibraryConventionPlugin"
         }

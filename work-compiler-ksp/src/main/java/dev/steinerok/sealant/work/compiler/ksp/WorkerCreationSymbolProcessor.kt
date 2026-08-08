@@ -96,10 +96,17 @@ public class WorkerCreationSymbolProcessor(
         }
 
         val constructors = clazz.getConstructors().toList()
-        val assistedConstructor = constructors
-            .singleOrNull { it.isAnnotationPresent(ClassNames.assistedInject) }
+        val assistedConstructor = constructors.singleOrNull()
 
-        if (constructors.size != 1 || assistedConstructor == null) {
+        // Mirror Metro's semantics: an `@AssistedInject` annotation on the class itself
+        // applies to the single primary constructor, so either placement is accepted.
+        val assistedInjectOnClass = clazz.isAnnotationPresent(ClassNames.assistedInject)
+        val assistedInjectOnConstructor =
+            assistedConstructor?.isAnnotationPresent(ClassNames.assistedInject) == true
+
+        if (assistedConstructor == null ||
+            (!assistedInjectOnClass && !assistedInjectOnConstructor)
+        ) {
             logger.error(
                 message = "Worker class, which is annotated `@SealantWorker`, must have " +
                         "exactly one constructor and it must be annotated with `@AssistedInject`",

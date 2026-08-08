@@ -136,7 +136,8 @@ public class AppComponentInjectionSymbolProcessor(
      * into the target class.
      * * Output example:
      * ```kotlin
-     * public class <Type>_SealantInjector @Inject constructor(
+     * @Inject
+     * public class <Type>_SealantInjector(
      *     public override val injector: MembersInjector<<Type>>
      * ) : SealantInjector<<Type>>
      * ```

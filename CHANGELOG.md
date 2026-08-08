@@ -1,7 +1,21 @@
 Change Log
 ==========
 
+## Version 0.7.0-beta02
+
+_2026-08-08_
+
+* Class-level `@Inject` and `@AssistedInject` are now supported: like Metro, a class-level
+  annotation applies to the class's single primary constructor. Generated
+  `<Type>_SealantInjector` classes now emit `@Inject` on the class instead of the constructor,
+  and the ViewModel and Worker symbol processors accept either annotation placement. This is
+  the recommended style for classes with exactly one constructor and silences Metro's
+  "There is only one @Inject-annotated constructor" warning on generated code.
+* Upgrade Gradle to `9.7.0`, Metro to `1.4.1`.
+
 ## Version 0.7.0-beta01
+
+_2026-08-03_
 
 * **Breaking:** Sealant is now Metro-only. The Dagger/Anvil generation path, `sample/anvil`,
   `sample/metro-experiment`, and the `sealant.codegen.mode=metroInterop` option have been removed.

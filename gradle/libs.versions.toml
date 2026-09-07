@@ -29,7 +29,7 @@ dagger = "2.60.1"
 anvilKsp = "0.5.4"
 metro = "1.3.2"
 # Tools
-kotlinpoet = "2.3.0"
+kotlinpoet = "2.4.0"
 auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 # Testing instruments

@@ -3,7 +3,7 @@
 kotlin = "2.4.10"
 ksp = "2.3.11"
 androidPlugin = "9.3.1"
-versionsPlugin = "0.59.0"
+versionsPlugin = "0.62.0"
 spotlessPlugin = "8.9.0"
 ktlintTool = "1.8.0"
 grgitPlugin = "5.3.3"
